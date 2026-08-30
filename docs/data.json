@@ -1,0 +1,642 @@
+{
+  "name": "AI Agent Ecosystem",
+  "children": [
+    {
+      "name": "Autonomous & General-Purpose Agents",
+      "key": "autonomous-agents",
+      "children": [
+        {
+          "name": "AutoGPT",
+          "description": "Early influential autonomous GPT-4 agent that pursues goals with minimal human input",
+          "repo": "Significant-Gravitas/AutoGPT",
+          "url": "https://github.com/Significant-Gravitas/AutoGPT",
+          "value": 172000
+        },
+        {
+          "name": "Open Interpreter",
+          "description": "Natural-language interface letting an LLM autonomously run code locally",
+          "repo": "OpenInterpreter/open-interpreter",
+          "url": "https://github.com/OpenInterpreter/open-interpreter",
+          "value": 58000
+        },
+        {
+          "name": "browser-use",
+          "description": "Library/agent that lets LLMs autonomously control a web browser",
+          "repo": "browser-use/browser-use",
+          "url": "https://github.com/browser-use/browser-use",
+          "value": 58000
+        },
+        {
+          "name": "GPT Engineer",
+          "description": "Agent that generates an entire codebase from a natural-language prompt",
+          "repo": "AntonOsika/gpt-engineer",
+          "url": "https://github.com/AntonOsika/gpt-engineer",
+          "value": 52000
+        },
+        {
+          "name": "OpenHands",
+          "description": "Platform of AI software-engineer agents that modify code, run commands, and browse",
+          "repo": "All-Hands-AI/OpenHands",
+          "url": "https://github.com/All-Hands-AI/OpenHands",
+          "value": 50000
+        },
+        {
+          "name": "MetaGPT",
+          "description": "Multi-agent framework that simulates a software company with role-based agents",
+          "repo": "geekan/MetaGPT",
+          "url": "https://github.com/geekan/MetaGPT",
+          "value": 45000
+        },
+        {
+          "name": "Cline",
+          "description": "Autonomous coding agent VS Code extension that can edit files, run commands, and browse",
+          "repo": "cline/cline",
+          "url": "https://github.com/cline/cline",
+          "value": 42000
+        },
+        {
+          "name": "AgentGPT",
+          "description": "Browser-based tool to configure and deploy autonomous AI agents",
+          "repo": "reworkd/AgentGPT",
+          "url": "https://github.com/reworkd/AgentGPT",
+          "value": 33000
+        },
+        {
+          "name": "GPT-Pilot",
+          "description": "AI dev-tool agent that writes production-ready apps step by step, human-in-the-loop",
+          "repo": "Pythagora-io/gpt-pilot",
+          "url": "https://github.com/Pythagora-io/gpt-pilot",
+          "value": 32000
+        },
+        {
+          "name": "Aider",
+          "description": "AI pair-programming CLI agent that edits code in your local git repo",
+          "repo": "Aider-AI/aider",
+          "url": "https://github.com/Aider-AI/aider",
+          "value": 30000
+        },
+        {
+          "name": "Codex CLI",
+          "description": "OpenAI's lightweight coding agent that runs in a terminal to autonomously edit code",
+          "repo": "openai/codex",
+          "url": "https://github.com/openai/codex",
+          "value": 30000
+        },
+        {
+          "name": "ChatDev",
+          "description": "Virtual software company where multiple LLM agents collaborate to build software",
+          "repo": "OpenBMB/ChatDev",
+          "url": "https://github.com/OpenBMB/ChatDev",
+          "value": 25000
+        },
+        {
+          "name": "BabyAGI",
+          "description": "Minimal task-driven autonomous agent loop that creates, prioritizes, and executes tasks",
+          "repo": "yoheinakajima/babyagi",
+          "url": "https://github.com/yoheinakajima/babyagi",
+          "value": 21000
+        },
+        {
+          "name": "Devika",
+          "description": "Open-source agentic AI software engineer that plans, researches, and writes code",
+          "repo": "stitionai/devika",
+          "url": "https://github.com/stitionai/devika",
+          "value": 19000
+        },
+        {
+          "name": "SuperAGI",
+          "description": "Open-source framework/platform to build, manage, and run autonomous agents with a UI",
+          "repo": "TransformerOptimus/SuperAGI",
+          "url": "https://github.com/TransformerOptimus/SuperAGI",
+          "value": 15000
+        },
+        {
+          "name": "SWE-agent",
+          "description": "Agent that autonomously fixes GitHub issues and solves SWE-bench tasks",
+          "repo": "SWE-agent/SWE-agent",
+          "url": "https://github.com/SWE-agent/SWE-agent",
+          "value": 14000
+        },
+        {
+          "name": "Skyvern",
+          "description": "Autonomous browser-automation agent using LLMs and computer vision",
+          "repo": "Skyvern-AI/skyvern",
+          "url": "https://github.com/Skyvern-AI/skyvern",
+          "value": 12000
+        },
+        {
+          "name": "AGiXT",
+          "description": "Task-completing autonomous agent runtime for chaining LLM tasks with tools and memory",
+          "repo": "Josh-XT/AGiXT",
+          "url": "https://github.com/Josh-XT/AGiXT",
+          "value": 3000
+        },
+        {
+          "name": "Moatless Tools",
+          "description": "Autonomous coding agent aimed at resolving real-world GitHub issues with minimal context tools",
+          "repo": "aorwall/moatless-tools",
+          "url": "https://github.com/aorwall/moatless-tools",
+          "value": 800
+        }
+      ]
+    },
+    {
+      "name": "Agent Frameworks & SDKs",
+      "key": "agent-frameworks",
+      "children": [
+        {
+          "name": "LangChain",
+          "description": "Framework for building LLM-powered applications with chains, tools, and agents",
+          "repo": "langchain-ai/langchain",
+          "url": "https://github.com/langchain-ai/langchain",
+          "value": 95000
+        },
+        {
+          "name": "AutoGen",
+          "description": "Multi-agent conversation framework from Microsoft for building LLM applications",
+          "repo": "microsoft/autogen",
+          "url": "https://github.com/microsoft/autogen",
+          "value": 41000
+        },
+        {
+          "name": "LlamaIndex",
+          "description": "Data framework for LLM applications with agent and RAG capabilities",
+          "repo": "run-llama/llama_index",
+          "url": "https://github.com/run-llama/llama_index",
+          "value": 37000
+        },
+        {
+          "name": "CrewAI",
+          "description": "Framework for orchestrating role-playing, autonomous AI agents as collaborative crews",
+          "repo": "crewAIInc/crewAI",
+          "url": "https://github.com/crewAIInc/crewAI",
+          "value": 27000
+        },
+        {
+          "name": "Semantic Kernel",
+          "description": "Microsoft's SDK for integrating LLMs into apps with plugins, planners, and agents",
+          "repo": "microsoft/semantic-kernel",
+          "url": "https://github.com/microsoft/semantic-kernel",
+          "value": 22000
+        },
+        {
+          "name": "DSPy",
+          "description": "Framework for programming (not prompting) language models, including agentic pipelines",
+          "repo": "stanfordnlp/dspy",
+          "url": "https://github.com/stanfordnlp/dspy",
+          "value": 20000
+        },
+        {
+          "name": "Rasa",
+          "description": "Open-source framework for building conversational AI and task-oriented agents",
+          "repo": "RasaHQ/rasa",
+          "url": "https://github.com/RasaHQ/rasa",
+          "value": 18000
+        },
+        {
+          "name": "Agno",
+          "description": "Lightweight framework for building multi-modal, multi-agent systems (formerly Phidata)",
+          "repo": "agno-agi/agno",
+          "url": "https://github.com/agno-agi/agno",
+          "value": 18000
+        },
+        {
+          "name": "Swarm",
+          "description": "OpenAI's lightweight experimental framework for orchestrating multi-agent handoffs",
+          "repo": "openai/swarm",
+          "url": "https://github.com/openai/swarm",
+          "value": 18000
+        },
+        {
+          "name": "Haystack",
+          "description": "End-to-end framework for building production-ready LLM and RAG/agent applications",
+          "repo": "deepset-ai/haystack",
+          "url": "https://github.com/deepset-ai/haystack",
+          "value": 17000
+        },
+        {
+          "name": "smolagents",
+          "description": "Hugging Face's minimal library for building code-writing LLM agents",
+          "repo": "huggingface/smolagents",
+          "url": "https://github.com/huggingface/smolagents",
+          "value": 15000
+        },
+        {
+          "name": "Letta (MemGPT)",
+          "description": "Framework for building stateful LLM agents with long-term memory",
+          "repo": "letta-ai/letta",
+          "url": "https://github.com/letta-ai/letta",
+          "value": 15000
+        },
+        {
+          "name": "LangGraph",
+          "description": "Library for building stateful, multi-actor agent applications as graphs",
+          "repo": "langchain-ai/langgraph",
+          "url": "https://github.com/langchain-ai/langgraph",
+          "value": 12000
+        },
+        {
+          "name": "OpenAI Agents SDK",
+          "description": "OpenAI's lightweight Python SDK for building multi-agent workflows",
+          "repo": "openai/openai-agents-python",
+          "url": "https://github.com/openai/openai-agents-python",
+          "value": 9000
+        },
+        {
+          "name": "Google ADK",
+          "description": "Google's open-source framework for building and deploying multi-agent systems",
+          "repo": "google/adk-python",
+          "url": "https://github.com/google/adk-python",
+          "value": 9000
+        },
+        {
+          "name": "Pydantic AI",
+          "description": "Python agent framework built on Pydantic for type-safe LLM applications",
+          "repo": "pydantic/pydantic-ai",
+          "url": "https://github.com/pydantic/pydantic-ai",
+          "value": 8000
+        },
+        {
+          "name": "XAgent",
+          "description": "Autonomous LLM agent framework for solving complex tasks with planning and tool use",
+          "repo": "OpenBMB/XAgent",
+          "url": "https://github.com/OpenBMB/XAgent",
+          "value": 8000
+        },
+        {
+          "name": "Claude Agent SDK",
+          "description": "Anthropic's SDK for building autonomous agents on top of Claude",
+          "repo": "anthropics/claude-agent-sdk-python",
+          "url": "https://github.com/anthropics/claude-agent-sdk-python",
+          "value": 2000
+        },
+        {
+          "name": "Griptape",
+          "description": "Python framework for building modular AI agents and workflows with structured pipelines",
+          "repo": "griptape-ai/griptape",
+          "url": "https://github.com/griptape-ai/griptape",
+          "value": 2000
+        },
+        {
+          "name": "AG2 (AutoGen fork)",
+          "description": "Community fork continuing multi-agent conversation framework development",
+          "repo": "ag2ai/ag2",
+          "url": "https://github.com/ag2ai/ag2",
+          "value": 2000
+        }
+      ]
+    },
+    {
+      "name": "Memory, RAG & Retrieval",
+      "key": "agent-memory-tools",
+      "children": [
+        {
+          "name": "Milvus",
+          "description": "Open-source vector database built for scalable similarity search",
+          "repo": "milvus-io/milvus",
+          "url": "https://github.com/milvus-io/milvus",
+          "value": 30000
+        },
+        {
+          "name": "FAISS",
+          "description": "Library for efficient similarity search and clustering of dense vectors",
+          "repo": "facebookresearch/faiss",
+          "url": "https://github.com/facebookresearch/faiss",
+          "value": 30000
+        },
+        {
+          "name": "Mem0",
+          "description": "Memory layer for AI agents/assistants providing persistent, personalized memory",
+          "repo": "mem0ai/mem0",
+          "url": "https://github.com/mem0ai/mem0",
+          "value": 25000
+        },
+        {
+          "name": "Qdrant",
+          "description": "Vector similarity search engine and database written in Rust",
+          "repo": "qdrant/qdrant",
+          "url": "https://github.com/qdrant/qdrant",
+          "value": 21000
+        },
+        {
+          "name": "Chroma",
+          "description": "Open-source embedding database for building AI apps with retrieval",
+          "repo": "chroma-core/chroma",
+          "url": "https://github.com/chroma-core/chroma",
+          "value": 16000
+        },
+        {
+          "name": "LiteLLM",
+          "description": "Unified API/proxy for calling 100+ LLMs with function-calling support",
+          "repo": "BerriAI/litellm",
+          "url": "https://github.com/BerriAI/litellm",
+          "value": 15000
+        },
+        {
+          "name": "Weaviate",
+          "description": "Open-source vector database with hybrid search and modules for AI apps",
+          "repo": "weaviate/weaviate",
+          "url": "https://github.com/weaviate/weaviate",
+          "value": 11000
+        },
+        {
+          "name": "txtai",
+          "description": "All-in-one embeddings database for semantic search and RAG workflows",
+          "repo": "neuml/txtai",
+          "url": "https://github.com/neuml/txtai",
+          "value": 9000
+        },
+        {
+          "name": "Instructor",
+          "description": "Library for structured outputs from LLMs using Pydantic validation",
+          "repo": "jxnl/instructor",
+          "url": "https://github.com/jxnl/instructor",
+          "value": 9000
+        },
+        {
+          "name": "Guardrails",
+          "description": "Framework for adding structure, validation, and correction to LLM outputs",
+          "repo": "guardrails-ai/guardrails",
+          "url": "https://github.com/guardrails-ai/guardrails",
+          "value": 4500
+        },
+        {
+          "name": "Zep",
+          "description": "Long-term memory store for LLM apps with a temporal knowledge graph",
+          "repo": "getzep/zep",
+          "url": "https://github.com/getzep/zep",
+          "value": 3000
+        }
+      ]
+    },
+    {
+      "name": "Protocols, Orchestration & Infrastructure",
+      "key": "agent-protocols-infra",
+      "children": [
+        {
+          "name": "Model Context Protocol",
+          "description": "Open standard from Anthropic for connecting LLM apps to tools and data sources",
+          "repo": "modelcontextprotocol/servers",
+          "url": "https://github.com/modelcontextprotocol/servers",
+          "value": 45000
+        },
+        {
+          "name": "Ray",
+          "description": "Distributed computing framework widely used to scale agent/LLM workloads",
+          "repo": "ray-project/ray",
+          "url": "https://github.com/ray-project/ray",
+          "value": 34000
+        },
+        {
+          "name": "Agent2Agent (A2A)",
+          "description": "Google-led open protocol for interoperable communication between AI agents",
+          "repo": "google-a2a/A2A",
+          "url": "https://github.com/google-a2a/A2A",
+          "value": 15000
+        },
+        {
+          "name": "CopilotKit",
+          "description": "React toolkit for building in-app AI copilots and agentic UI experiences",
+          "repo": "CopilotKit/CopilotKit",
+          "url": "https://github.com/CopilotKit/CopilotKit",
+          "value": 15000
+        },
+        {
+          "name": "Temporal",
+          "description": "Durable execution engine for building reliable, long-running agent workflows",
+          "repo": "temporalio/temporal",
+          "url": "https://github.com/temporalio/temporal",
+          "value": 12000
+        },
+        {
+          "name": "E2B",
+          "description": "Secure cloud sandboxes for running AI-generated code with isolated execution",
+          "repo": "e2b-dev/e2b",
+          "url": "https://github.com/e2b-dev/e2b",
+          "value": 8500
+        },
+        {
+          "name": "Composio",
+          "description": "Integration/tool-calling platform giving agents authenticated access to SaaS APIs",
+          "repo": "ComposioHQ/composio",
+          "url": "https://github.com/ComposioHQ/composio",
+          "value": 8000
+        },
+        {
+          "name": "LangServe",
+          "description": "Library for deploying LangChain runnables/chains as REST APIs",
+          "repo": "langchain-ai/langserve",
+          "url": "https://github.com/langchain-ai/langserve",
+          "value": 2200
+        }
+      ]
+    },
+    {
+      "name": "Coding Agents & Dev Tools",
+      "key": "coding-agents",
+      "children": [
+        {
+          "name": "Continue.dev",
+          "description": "Open-source IDE extension for building custom AI coding assistants",
+          "repo": "continuedev/continue",
+          "url": "https://github.com/continuedev/continue",
+          "value": 22000
+        },
+        {
+          "name": "Claude Code",
+          "description": "Anthropic's official agentic CLI coding assistant",
+          "repo": "anthropics/claude-code",
+          "url": "https://github.com/anthropics/claude-code",
+          "value": 15000
+        },
+        {
+          "name": "Bolt.new",
+          "description": "Browser-based AI agent that scaffolds and runs full-stack web apps in-browser",
+          "repo": "stackblitz/bolt.new",
+          "url": "https://github.com/stackblitz/bolt.new",
+          "value": 15000
+        },
+        {
+          "name": "Plandex",
+          "description": "Terminal-based AI coding agent for large, multi-file programming tasks",
+          "repo": "plandex-ai/plandex",
+          "url": "https://github.com/plandex-ai/plandex",
+          "value": 13000
+        },
+        {
+          "name": "opencode",
+          "description": "Open-source terminal AI coding agent, provider-agnostic alternative to Claude Code",
+          "repo": "sst/opencode",
+          "url": "https://github.com/sst/opencode",
+          "value": 9000
+        },
+        {
+          "name": "Sweep",
+          "description": "AI junior developer bot that turns GitHub issues into pull requests",
+          "repo": "sweepai/sweep",
+          "url": "https://github.com/sweepai/sweep",
+          "value": 7500
+        }
+      ]
+    },
+    {
+      "name": "Multi-Agent Simulation & Research",
+      "key": "multi-agent-simulation",
+      "children": [
+        {
+          "name": "JARVIS / HuggingGPT",
+          "description": "LLM orchestrates specialized HuggingFace models to solve multimodal tasks",
+          "repo": "microsoft/JARVIS",
+          "url": "https://github.com/microsoft/JARVIS",
+          "value": 24000
+        },
+        {
+          "name": "Generative Agents",
+          "description": "Simulated town of LLM-driven agents with memory, planning, and reflection",
+          "repo": "joonspk-research/generative_agents",
+          "url": "https://github.com/joonspk-research/generative_agents",
+          "value": 18000
+        },
+        {
+          "name": "CAMEL",
+          "description": "Framework for autonomous cooperative agents via role-playing communication",
+          "repo": "camel-ai/camel",
+          "url": "https://github.com/camel-ai/camel",
+          "value": 8000
+        },
+        {
+          "name": "Voyager",
+          "description": "LLM-powered lifelong learning agent that autonomously explores Minecraft",
+          "repo": "MineDojo/Voyager",
+          "url": "https://github.com/MineDojo/Voyager",
+          "value": 5900
+        },
+        {
+          "name": "AgentVerse",
+          "description": "Framework for multi-agent environments enabling collaboration and simulation",
+          "repo": "OpenBMB/AgentVerse",
+          "url": "https://github.com/OpenBMB/AgentVerse",
+          "value": 4400
+        },
+        {
+          "name": "Concordia",
+          "description": "DeepMind library for building generative agent-based social simulations",
+          "repo": "google-deepmind/concordia",
+          "url": "https://github.com/google-deepmind/concordia",
+          "value": 2600
+        },
+        {
+          "name": "ChatArena",
+          "description": "Multi-agent language game environments for studying LLM communication",
+          "repo": "Farama-Foundation/chatarena",
+          "url": "https://github.com/Farama-Foundation/chatarena",
+          "value": 1600
+        },
+        {
+          "name": "MindAgent",
+          "description": "Multi-agent collaboration benchmark/framework in gaming environments",
+          "repo": "cuijiaxun/MindAgent",
+          "url": "https://github.com/cuijiaxun/MindAgent",
+          "value": 700
+        },
+        {
+          "name": "AgentSims",
+          "description": "Sandbox simulation platform for evaluating LLM-based agents",
+          "repo": "py499372727/AgentSims",
+          "url": "https://github.com/py499372727/AgentSims",
+          "value": 500
+        }
+      ]
+    },
+    {
+      "name": "Evaluation & Observability",
+      "key": "agent-eval-observability",
+      "children": [
+        {
+          "name": "OpenAI Evals",
+          "description": "Framework and registry of benchmarks for evaluating LLMs and LLM-based systems",
+          "repo": "openai/evals",
+          "url": "https://github.com/openai/evals",
+          "value": 15500
+        },
+        {
+          "name": "Langfuse",
+          "description": "Open-source LLM engineering platform for tracing, evaluation, and observability",
+          "repo": "langfuse/langfuse",
+          "url": "https://github.com/langfuse/langfuse",
+          "value": 8000
+        },
+        {
+          "name": "Ragas",
+          "description": "Evaluation framework focused on RAG pipelines: faithfulness, relevance, context quality",
+          "repo": "explodinggradients/ragas",
+          "url": "https://github.com/explodinggradients/ragas",
+          "value": 8000
+        },
+        {
+          "name": "Promptfoo",
+          "description": "CLI and library for testing, evaluating, and red-teaming LLM prompts and agent outputs",
+          "repo": "promptfoo/promptfoo",
+          "url": "https://github.com/promptfoo/promptfoo",
+          "value": 6000
+        },
+        {
+          "name": "DeepEval",
+          "description": "Open-source LLM evaluation framework with pytest-like unit testing",
+          "repo": "confident-ai/deepeval",
+          "url": "https://github.com/confident-ai/deepeval",
+          "value": 4500
+        },
+        {
+          "name": "Arize Phoenix",
+          "description": "Open-source AI observability and evaluation library for tracing LLM apps and agents",
+          "repo": "Arize-ai/phoenix",
+          "url": "https://github.com/Arize-ai/phoenix",
+          "value": 4500
+        },
+        {
+          "name": "Giskard",
+          "description": "Testing framework for ML and LLM systems: vulnerability scanning and quality evaluation",
+          "repo": "Giskard-AI/giskard",
+          "url": "https://github.com/Giskard-AI/giskard",
+          "value": 4200
+        },
+        {
+          "name": "AgentOps",
+          "description": "Observability and monitoring SDK purpose-built for AI agents",
+          "repo": "AgentOps-AI/agentops",
+          "url": "https://github.com/AgentOps-AI/agentops",
+          "value": 3800
+        },
+        {
+          "name": "Helicone",
+          "description": "Open-source observability platform for logging, monitoring, and debugging LLM apps",
+          "repo": "Helicone/helicone",
+          "url": "https://github.com/Helicone/helicone",
+          "value": 2500
+        },
+        {
+          "name": "TruLens",
+          "description": "Library for evaluating and tracking LLM app quality, including agent reasoning",
+          "repo": "truera/trulens",
+          "url": "https://github.com/truera/trulens",
+          "value": 2400
+        },
+        {
+          "name": "AgentBench",
+          "description": "Benchmark suite for evaluating LLMs as agents across diverse interactive environments",
+          "repo": "THUDM/AgentBench",
+          "url": "https://github.com/THUDM/AgentBench",
+          "value": 2300
+        },
+        {
+          "name": "OpenLLMetry",
+          "description": "OpenTelemetry-based observability for LLM applications and agents",
+          "repo": "traceloop/openllmetry",
+          "url": "https://github.com/traceloop/openllmetry",
+          "value": 2000
+        }
+      ]
+    }
+  ]
+}
