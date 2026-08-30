@@ -1,228 +1,199 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Map of Agents</title>
 <meta name="description" content="A live, data-driven map of the AI agent ecosystem — sized by stars, colored by maintenance health or traction, with Engineering and Product lenses for decision-makers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: { accent: '#22d3ee' },
+      },
+    },
+  };
+</script>
 <style>
   :root {
-    color-scheme: dark;
-    --bg: #0b0d12;
-    --panel: #12151c;
-    --panel2: #171b24;
-    --border: #262b36;
-    --text: #e6e9ef;
-    --muted: #8b93a3;
-    --accent: #6ee7ff;
-    --active: #34d399;
-    --moderate: #fbbf24;
-    --stale: #f97316;
-    --archived: #6b7280;
+    --ease-out: cubic-bezier(.22,1,.36,1);
+    --ease-inout: cubic-bezier(.4,0,.2,1);
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
-  button, select, input { font-family: inherit; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  ::selection { background: rgba(34,211,238,.25); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2f; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a40; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 
-  #app { display: flex; flex-direction: column; height: 100%; }
+  /* -------- press/tap feedback -------- */
+  button { transition: transform .12s var(--ease-out), color .15s var(--ease-inout), opacity .15s; }
+  button:active { transform: scale(.96); }
 
-  header {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
-    z-index: 10;
+  /* -------- segmented control -------- */
+  .seg { position: relative; }
+  .seg-thumb {
+    position: absolute; top: 3px; left: 3px; height: calc(100% - 6px);
+    background: #f4f4f5; border-radius: 999px; z-index: 0;
+    transition: transform .32s var(--ease-out), width .32s var(--ease-out);
+    box-shadow: 0 1px 3px rgba(0,0,0,.3);
   }
-  header h1 { font-size: 15px; margin: 0; font-weight: 650; white-space: nowrap; }
-  header h1 span { color: var(--accent); }
-  .stats { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-  .stats b { color: var(--text); font-weight: 650; }
+  .seg button { position: relative; z-index: 1; }
 
-  .seg { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
-  .seg button {
-    background: var(--panel2); color: var(--muted); border: none; padding: 6px 12px;
-    font-size: 12px; cursor: pointer; border-right: 1px solid var(--border);
-  }
-  .seg button:last-child { border-right: none; }
-  .seg button.active { background: var(--accent); color: #05262c; font-weight: 650; }
-
-  select.control {
-    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
-    padding: 6px 8px; border-radius: 7px; font-size: 12px; outline: none;
-  }
-
-  #search {
-    margin-left: auto;
-    background: var(--panel2); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 10px; border-radius: 7px; font-size: 13px; width: 190px; outline: none;
-  }
-  #search:focus { border-color: var(--accent); }
-
-  .legend-row { display: flex; gap: 10px; align-items: center; font-size: 11px; color: var(--muted); }
-  .legend-row .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-
-  #body { flex: 1; display: flex; min-height: 0; }
-
-  aside {
-    width: 220px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--panel);
-    padding: 14px 14px; overflow-y: auto; font-size: 12.5px;
-  }
-  aside h3 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
-    margin: 16px 0 8px; }
-  aside h3:first-child { margin-top: 0; }
-  .chip-list { display: flex; flex-direction: column; gap: 4px; }
-  .chip {
-    display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 6px; cursor: pointer;
-    color: var(--muted); user-select: none;
-  }
-  .chip:hover { background: var(--panel2); }
-  .chip input { accent-color: var(--accent); }
-  .chip.on { color: var(--text); }
-  .chip .swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
-  .range-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-  .range-row input[type=range] { flex: 1; accent-color: var(--accent); }
-  .range-val { font-size: 11px; color: var(--muted); min-width: 44px; text-align: right; }
-  .reset-btn {
-    margin-top: 14px; width: 100%; background: var(--panel2); color: var(--muted); border: 1px solid var(--border);
-    padding: 6px; border-radius: 6px; font-size: 11.5px; cursor: pointer;
-  }
-  .reset-btn:hover { color: var(--text); border-color: var(--accent); }
-
-  main { flex: 1; position: relative; min-width: 0; }
-
-  #mapView { position: absolute; inset: 0; }
-  #chart { position: absolute; inset: 0; }
-  #breadcrumb { position: absolute; top: 10px; left: 10px; z-index: 5; font-size: 12px; color: var(--muted);
-    display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 60%; }
-  #breadcrumb span.crumb { cursor: pointer; padding: 3px 8px; border-radius: 5px; background: var(--panel); border: 1px solid var(--border); }
-  #breadcrumb span.crumb:hover { border-color: var(--accent); color: var(--accent); }
-  #breadcrumb span.sep { color: #454c5c; }
+  /* -------- treemap -------- */
+  #chart, #mapView { position: absolute; inset: 0; }
   svg { display: block; width: 100%; height: 100%; }
-  .node text { pointer-events: none; fill: #0b0d12; font-weight: 600; }
-  .node .cat-label { fill: var(--text); font-weight: 700; }
-  .node .sub-label { fill: rgba(0,0,0,.78); font-weight: 600; }
-
-  #tableView { position: absolute; inset: 0; overflow: auto; padding: 10px 16px 40px; display: none; }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  thead th {
-    position: sticky; top: 0; background: var(--bg); text-align: left; padding: 8px 10px;
-    border-bottom: 1px solid var(--border); color: var(--muted); font-weight: 600; cursor: pointer;
-    white-space: nowrap; user-select: none;
+  .node { cursor: pointer; }
+  .node rect {
+    transition: width .38s var(--ease-inout), height .38s var(--ease-inout),
+                fill .25s ease, opacity .25s ease, filter .15s ease;
+    transform-box: fill-box; transform-origin: center;
   }
-  thead th:hover { color: var(--accent); }
-  thead th.sorted { color: var(--accent); }
-  tbody td { padding: 7px 10px; border-bottom: 1px solid #1a1e28; vertical-align: top; }
-  tbody tr:hover { background: var(--panel2); }
-  tbody tr { cursor: pointer; }
-  td.name { font-weight: 600; }
-  td.desc { color: var(--muted); max-width: 340px; }
-  .badge { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 650; }
-  .badge.active { background: rgba(52,211,153,.16); color: var(--active); }
-  .badge.moderate { background: rgba(251,191,36,.16); color: var(--moderate); }
-  .badge.stale { background: rgba(249,115,22,.16); color: var(--stale); }
-  .badge.archived { background: rgba(107,114,128,.2); color: var(--archived); }
-  .risk { color: var(--stale); font-size: 11px; }
+  .node { transition: transform .38s var(--ease-inout); }
+  .node:hover rect { filter: brightness(1.08); transform: scale(1.012); }
+  .node text { pointer-events: none; font-weight: 600; transition: opacity .2s ease; }
+  .node .cat-label { fill: #f4f4f5; font-weight: 700; }
+  .node .sub-label { fill: rgba(0,0,0,.82); font-weight: 600; }
 
-  #tooltip {
-    position: fixed; z-index: 30; pointer-events: none;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 12px; font-size: 12.5px; max-width: 300px; line-height: 1.45;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    opacity: 0; transform: translateY(4px); transition: opacity .1s ease;
-  }
-  #tooltip.show { opacity: 1; }
-  #tooltip .t-name { font-weight: 700; color: var(--accent); margin-bottom: 3px; }
-  #tooltip .t-meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap; }
-
-  #detail {
-    position: absolute; top: 0; right: 0; bottom: 0; width: 320px; background: var(--panel);
-    border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; z-index: 8;
-    transform: translateX(100%); transition: transform .18s ease;
-  }
+  #detail { transform: translateX(100%); transition: transform .32s var(--ease-out); }
   #detail.open { transform: translateX(0); }
-  #detail .close { float: right; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
-  #detail h2 { font-size: 16px; margin: 0 0 4px; color: var(--accent); }
-  #detail .full-name { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
-  #detail p.desc { font-size: 13px; line-height: 1.5; color: var(--text); margin: 0 0 16px; }
-  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .metric { background: var(--panel2); border-radius: 8px; padding: 8px 10px; }
-  .metric .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .metric .v { font-size: 15px; font-weight: 650; margin-top: 2px; }
-  .open-link {
-    display: block; text-align: center; background: var(--accent); color: #05262c; font-weight: 650;
-    padding: 9px; border-radius: 8px; text-decoration: none; font-size: 13px;
+
+  #tooltip { pointer-events: none; opacity: 0; transform: scale(.96); transition: opacity .12s ease, transform .12s var(--ease-out); }
+  #tooltip.show { opacity: 1; transform: scale(1); }
+
+  input[type=checkbox], input[type=range] { accent-color: #22d3ee; }
+
+  .kbd {
+    font-family: ui-monospace, monospace; font-size: 10px; padding: 1px 5px; border-radius: 4px;
+    background: rgba(255,255,255,.08); color: #a1a1aa; border: 1px solid rgba(255,255,255,.08);
   }
 
-  #legend-footer { position: absolute; bottom: 10px; left: 10px; z-index: 5; font-size: 11px; color: var(--muted);
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; max-width: 320px; }
-
-  ::selection { background: rgba(110,231,255,.3); }
-  @media (max-width: 900px) { aside { display: none; } #detail { width: 100%; } }
+  /* -------- onboarding spotlight -------- */
+  #tourHighlight {
+    position: fixed; border-radius: 14px; pointer-events: none; z-index: 40;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,.7);
+    transition: top .38s var(--ease-out), left .38s var(--ease-out), width .38s var(--ease-out), height .38s var(--ease-out);
+  }
+  #tourCallout {
+    position: fixed; z-index: 41; max-width: 280px;
+    transition: top .38s var(--ease-out), left .38s var(--ease-out);
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp .4s var(--ease-out) both; }
 </style>
 </head>
-<body>
-<div id="app">
-  <header>
-    <h1>Map of <span>Agents</span></h1>
-    <div class="stats" id="stats"></div>
-    <div class="seg" id="viewToggle">
-      <button data-view="map" class="active">Map</button>
-      <button data-view="table">Table</button>
+<body class="bg-[#0a0a0c] text-zinc-100 h-full">
+<div id="app" class="flex flex-col h-full">
+
+  <!-- ============ HEADER ============ -->
+  <header class="flex items-center gap-3 flex-wrap px-5 py-3 border-b border-white/[.06] bg-black/40 backdrop-blur-xl z-10">
+    <h1 class="text-[15px] font-bold tracking-tight m-0 whitespace-nowrap">
+      Map of <span class="text-accent">Agents</span>
+    </h1>
+
+    <div id="stats" class="hidden lg:flex items-center gap-5 text-[13px] text-zinc-500 whitespace-nowrap tabular-nums"></div>
+
+    <div id="viewToggle" class="seg inline-flex rounded-full bg-white/[.04] border border-white/[.06] p-[3px] gap-0.5" role="tablist">
+      <span class="seg-thumb" style="width:50%"></span>
+      <button data-view="map" class="px-3.5 py-1.5 text-[12.5px] font-medium rounded-full text-zinc-900">Map</button>
+      <button data-view="table" class="px-3.5 py-1.5 text-[12.5px] font-medium rounded-full text-zinc-400">Table</button>
     </div>
-    <div class="seg" id="lensToggle">
-      <button data-lens="category" class="active">Category</button>
-      <button data-lens="maintenance">Engineering lens</button>
-      <button data-lens="traction">Product lens</button>
+
+    <div id="lensToggle" class="seg inline-flex rounded-full bg-white/[.04] border border-white/[.06] p-[3px] gap-0.5" role="tablist">
+      <span class="seg-thumb" style="width:33.33%"></span>
+      <button data-lens="category" class="px-3.5 py-1.5 text-[12.5px] font-medium rounded-full text-zinc-900 whitespace-nowrap">Category</button>
+      <button data-lens="maintenance" class="px-3.5 py-1.5 text-[12.5px] font-medium rounded-full text-zinc-400 whitespace-nowrap">Engineering lens</button>
+      <button data-lens="traction" class="px-3.5 py-1.5 text-[12.5px] font-medium rounded-full text-zinc-400 whitespace-nowrap">Product lens</button>
     </div>
-    <input id="search" type="text" placeholder="Search projects…" autocomplete="off">
+
+    <div class="ml-auto flex items-center gap-2">
+      <div class="relative">
+        <input id="search" type="text" placeholder="Search projects…" autocomplete="off"
+          class="w-48 md:w-56 bg-white/[.04] border border-white/[.06] rounded-full pl-4 pr-9 py-1.5 text-[13px] text-zinc-100
+                 placeholder:text-zinc-500 outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/40 transition-shadow">
+        <span class="kbd absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">/</span>
+      </div>
+      <button id="tourReplay" title="Show tour" aria-label="Show tour"
+        class="w-8 h-8 shrink-0 rounded-full bg-white/[.04] border border-white/[.06] text-zinc-400 hover:text-accent hover:border-accent/40 text-[13px] font-semibold">?</button>
+    </div>
   </header>
 
-  <div id="body">
-    <aside>
-      <h3>Categories</h3>
-      <div class="chip-list" id="catFilters"></div>
+  <div id="body" class="flex-1 flex min-h-0">
 
-      <h3>Maintenance</h3>
-      <div class="chip-list" id="maintFilters"></div>
-
-      <h3>Min stars: <span class="range-val" id="starsVal">0</span></h3>
-      <div class="range-row">
-        <input type="range" id="starsRange" min="0" max="4" step="1" value="0">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="w-56 shrink-0 border-r border-white/[.06] bg-black/20 backdrop-blur-xl px-4 py-4 overflow-y-auto text-sm hidden md:block">
+      <div class="flex items-center justify-between mb-2.5">
+        <h3 class="text-[10px] font-semibold uppercase tracking-[.08em] text-zinc-500">Categories</h3>
+        <span class="text-[10px] text-zinc-600">click ● to isolate</span>
       </div>
+      <div id="catFilters" class="flex flex-col gap-0.5 mb-6"></div>
 
-      <button class="reset-btn" id="resetFilters">Reset filters</button>
+      <h3 class="text-[10px] font-semibold uppercase tracking-[.08em] text-zinc-500 mb-2.5">Maintenance</h3>
+      <div id="maintFilters" class="flex flex-col gap-0.5 mb-6"></div>
+
+      <h3 class="text-[10px] font-semibold uppercase tracking-[.08em] text-zinc-500 mb-2.5">
+        Min stars: <span id="starsVal" class="text-zinc-300 font-semibold normal-case tracking-normal">0</span>
+      </h3>
+      <input type="range" id="starsRange" min="0" max="4" step="1" value="0" class="w-full mb-6">
+
+      <button id="resetFilters"
+        class="w-full flex items-center justify-center gap-2 text-[12px] text-zinc-400 border border-white/[.06] rounded-full py-1.5
+               hover:text-zinc-100 hover:border-white/20 transition-colors">
+        Reset filters
+        <span id="filterBadge" class="hidden text-[10px] font-semibold bg-accent/15 text-accent rounded-full px-1.5 py-0.5"></span>
+      </button>
     </aside>
 
-    <main>
+    <!-- ============ MAIN ============ -->
+    <main class="flex-1 relative min-w-0">
       <div id="mapView">
-        <div id="breadcrumb"></div>
+        <div id="breadcrumb" class="absolute top-3 left-3 z-[5] flex items-center gap-1.5 flex-wrap max-w-[60%]"></div>
         <div id="chart"></div>
-        <div id="legend-footer"></div>
+        <div id="legend-footer"
+          class="absolute bottom-3 left-3 z-[5] max-w-sm text-[11px] leading-relaxed text-zinc-400
+                 bg-black/50 border border-white/[.06] rounded-xl px-3.5 py-2.5 backdrop-blur-xl"></div>
       </div>
-      <div id="tableView"></div>
-      <div id="detail">
-        <button class="close" id="closeDetail">✕</button>
-        <div id="detailBody"></div>
+
+      <div id="tableView" class="absolute inset-0 overflow-auto px-4 pb-10" style="display:none"></div>
+
+      <div id="detail"
+        class="absolute top-0 right-0 bottom-0 w-80 max-w-full bg-[#0d0d10]/95 border-l border-white/[.06] shadow-2xl backdrop-blur-xl
+               p-5 overflow-y-auto z-[8]">
+        <button id="closeDetail" class="float-right text-zinc-500 hover:text-zinc-100 text-lg leading-none">✕</button>
+        <div id="detailBody" class="clear-both"></div>
       </div>
     </main>
   </div>
 </div>
-<div id="tooltip"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<div id="tooltip"
+  class="fixed z-30 max-w-[300px] bg-[#0d0d10]/95 border border-white/[.08] rounded-xl shadow-2xl backdrop-blur-xl px-3.5 py-3 text-[12.5px] leading-snug"></div>
+
+<div id="tourHighlight" class="hidden"></div>
+<div id="tourCallout" class="hidden"></div>
+
 <script>
 (async function () {
   const raw = await d3.json("data.json");
   const meta = raw.meta || {};
   const STAR_STEPS = [0, 1000, 5000, 20000, 100000];
 
-  // ---------- flatten for filtering/table ----------
   const allCategories = raw.children.map(c => ({ key: c.key, name: c.name }));
   const allProjects = [];
   raw.children.forEach(cat => cat.children.forEach(p => allProjects.push({ ...p, category: cat.name, categoryKey: cat.key })));
 
   const state = {
-    view: "map",
-    lens: "category",
+    view: localStorage.getItem("moa_view") || "map",
+    lens: localStorage.getItem("moa_lens") || "category",
     search: "",
     activeCats: new Set(allCategories.map(c => c.key)),
     activeMaint: new Set(["active", "moderate", "stale", "archived", "unknown"]),
@@ -233,46 +204,95 @@
 
   const palette = d3.scaleOrdinal()
     .domain(allCategories.map(c => c.key))
-    .range(["#6ee7ff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#f97316", "#60a5fa"]);
+    .range(["#22d3ee", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#fb923c", "#60a5fa"]);
 
-  const maintColor = { active: "#34d399", moderate: "#fbbf24", stale: "#f97316", archived: "#6b7280", unknown: "#3a4152" };
+  const maintColor = { active: "#34d399", moderate: "#fbbf24", stale: "#fb923c", archived: "#71717a", unknown: "#3f3f46" };
+  const maintBadgeClass = {
+    active: "bg-emerald-400/10 text-emerald-400",
+    moderate: "bg-amber-400/10 text-amber-400",
+    stale: "bg-orange-400/10 text-orange-400",
+    archived: "bg-zinc-500/15 text-zinc-400",
+    unknown: "bg-zinc-500/15 text-zinc-400",
+  };
 
   function tractionColor(t) {
-    // log scale ramp
     const v = Math.log10(Math.max(t, 0.1));
-    const scale = d3.scaleLinear().domain([-1, 0, 1, 2.5]).range(["#1e293b", "#3b82f6", "#a78bfa", "#f472b6"]).clamp(true);
+    const scale = d3.scaleLinear().domain([-1, 0, 1, 2.5]).range(["#27272a", "#3b82f6", "#a78bfa", "#f472b6"]).clamp(true);
     return scale(v);
   }
 
-  // ---------- header stats ----------
+  // ---------- header stats (count-up) ----------
   document.getElementById("stats").innerHTML =
-    `<span><b>${meta.total_projects}</b> projects</span>` +
-    `<span><b>${meta.categories}</b> categories</span>` +
-    `<span><b>${(meta.total_stars/1e6).toFixed(1)}M</b> combined stars</span>` +
-    `<span>snapshot <b>${meta.snapshot_date}</b></span>`;
+    `<span><b id="statProjects" class="text-zinc-100 font-semibold text-[14px]">0</b> projects</span>` +
+    `<span><b id="statCats" class="text-zinc-100 font-semibold text-[14px]">0</b> categories</span>` +
+    `<span><b id="statStars" class="text-zinc-100 font-semibold text-[14px]">0</b> combined stars</span>` +
+    `<span class="text-zinc-600">snapshot <b class="text-zinc-400 font-medium">${meta.snapshot_date}</b></span>`;
+
+  function countUp(el, target, opts = {}) {
+    const dur = 650, start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = target * eased;
+      el.textContent = opts.fmt ? opts.fmt(val) : Math.round(val).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  countUp(document.getElementById("statProjects"), meta.total_projects);
+  countUp(document.getElementById("statCats"), meta.categories);
+  countUp(document.getElementById("statStars"), meta.total_stars / 1e6, { fmt: v => v.toFixed(1) + "M" });
 
   // ---------- sidebar filters ----------
+  const chipBase = "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer select-none hover:bg-white/[.04] transition-colors";
+
   const catFiltersEl = document.getElementById("catFilters");
+  const catRows = {};
   allCategories.forEach(c => {
     const row = document.createElement("label");
-    row.className = "chip on";
-    row.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${palette(c.key)}"></span>${c.name}`;
-    row.querySelector("input").addEventListener("change", e => {
+    row.className = chipBase + " text-zinc-200";
+    row.innerHTML = `<input type="checkbox" checked class="w-3.5 h-3.5 rounded">
+      <span class="swatch w-2.5 h-2.5 rounded-full shrink-0 cursor-pointer ring-2 ring-transparent hover:ring-white/20 transition-all" style="background:${palette(c.key)}"></span>
+      <span class="leading-tight text-[13px]">${c.name}</span>`;
+    const checkbox = row.querySelector("input");
+    checkbox.addEventListener("change", e => {
       if (e.target.checked) state.activeCats.add(c.key); else state.activeCats.delete(c.key);
-      row.classList.toggle("on", e.target.checked);
+      syncCatRowStyles();
+      refresh();
+    });
+    row.querySelector(".swatch").addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      const isSolo = state.activeCats.size === 1 && state.activeCats.has(c.key);
+      state.activeCats = isSolo ? new Set(allCategories.map(x => x.key)) : new Set([c.key]);
+      allCategories.forEach(x => { catRows[x.key].querySelector("input").checked = state.activeCats.has(x.key); });
+      syncCatRowStyles();
       refresh();
     });
     catFiltersEl.appendChild(row);
+    catRows[c.key] = row;
   });
+  function syncCatRowStyles() {
+    allCategories.forEach(c => {
+      const on = state.activeCats.has(c.key);
+      catRows[c.key].classList.toggle("text-zinc-200", on);
+      catRows[c.key].classList.toggle("text-zinc-600", !on);
+    });
+    updateFilterBadge();
+  }
 
   const maintFiltersEl = document.getElementById("maintFilters");
+  const ALL_MAINT = ["active", "moderate", "stale", "archived"];
   [["active", "Active (<90d)"], ["moderate", "Moderate (<1y)"], ["stale", "Stale (>1y)"], ["archived", "Archived"]].forEach(([k, label]) => {
     const row = document.createElement("label");
-    row.className = "chip on";
-    row.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${maintColor[k]}"></span>${label}`;
+    row.className = chipBase + " text-zinc-200";
+    row.innerHTML = `<input type="checkbox" checked class="w-3.5 h-3.5 rounded">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${maintColor[k]}"></span>
+      <span class="leading-tight text-[13px]">${label}</span>`;
     row.querySelector("input").addEventListener("change", e => {
       if (e.target.checked) state.activeMaint.add(k); else state.activeMaint.delete(k);
-      row.classList.toggle("on", e.target.checked);
+      row.classList.toggle("text-zinc-200", e.target.checked);
+      row.classList.toggle("text-zinc-600", !e.target.checked);
+      updateFilterBadge();
       refresh();
     });
     maintFiltersEl.appendChild(row);
@@ -284,15 +304,32 @@
   starsRange.addEventListener("input", () => {
     state.minStarsIdx = +starsRange.value;
     starsVal.textContent = fmtStars(STAR_STEPS[state.minStarsIdx]);
+    updateFilterBadge();
     refresh();
   });
+
+  function updateFilterBadge() {
+    let n = 0;
+    if (state.activeCats.size < allCategories.length) n++;
+    if (state.activeMaint.size < ALL_MAINT.length) n++;
+    if (state.minStarsIdx > 0) n++;
+    const badge = document.getElementById("filterBadge");
+    if (n > 0) { badge.textContent = n; badge.classList.remove("hidden"); }
+    else badge.classList.add("hidden");
+  }
 
   document.getElementById("resetFilters").addEventListener("click", () => {
     state.activeCats = new Set(allCategories.map(c => c.key));
     state.activeMaint = new Set(["active", "moderate", "stale", "archived", "unknown"]);
     state.minStarsIdx = 0;
     starsRange.value = 0; starsVal.textContent = "0";
-    document.querySelectorAll("#catFilters input, #maintFilters input").forEach(i => { i.checked = true; i.closest(".chip").classList.add("on"); });
+    document.querySelectorAll("#maintFilters input").forEach(i => {
+      i.checked = true;
+      i.closest("label").classList.add("text-zinc-200");
+      i.closest("label").classList.remove("text-zinc-600");
+    });
+    allCategories.forEach(c => { catRows[c.key].querySelector("input").checked = true; });
+    syncCatRowStyles();
     document.getElementById("search").value = "";
     state.search = "";
     refresh();
@@ -303,21 +340,48 @@
     refresh();
   });
 
-  // ---------- view / lens toggles ----------
-  document.getElementById("viewToggle").addEventListener("click", e => {
-    const btn = e.target.closest("button"); if (!btn) return;
-    state.view = btn.dataset.view;
-    document.querySelectorAll("#viewToggle button").forEach(b => b.classList.toggle("active", b === btn));
-    document.getElementById("mapView").style.display = state.view === "map" ? "block" : "none";
-    document.getElementById("tableView").style.display = state.view === "table" ? "block" : "none";
-    refresh();
-  });
-  document.getElementById("lensToggle").addEventListener("click", e => {
-    const btn = e.target.closest("button"); if (!btn) return;
-    state.lens = btn.dataset.lens;
-    document.querySelectorAll("#lensToggle button").forEach(b => b.classList.toggle("active", b === btn));
+  // ---------- segmented control thumb ----------
+  function moveThumb(container, btn) {
+    const thumb = container.querySelector(".seg-thumb");
+    thumb.style.width = btn.offsetWidth + "px";
+    thumb.style.transform = `translateX(${btn.offsetLeft - 3}px)`;
+  }
+  function setSegActive(container, btn) {
+    container.querySelectorAll("button").forEach(b => {
+      b.classList.toggle("text-zinc-900", b === btn);
+      b.classList.toggle("text-zinc-400", b !== btn);
+    });
+    moveThumb(container, btn);
+  }
+
+  const viewToggleEl = document.getElementById("viewToggle");
+  const lensToggleEl = document.getElementById("lensToggle");
+
+  function applyView(view, animate) {
+    state.view = view;
+    localStorage.setItem("moa_view", view);
+    const btn = viewToggleEl.querySelector(`[data-view="${view}"]`);
+    setSegActive(viewToggleEl, btn);
+    document.getElementById("mapView").style.display = view === "map" ? "block" : "none";
+    document.getElementById("tableView").style.display = view === "table" ? "block" : "none";
+    if (animate) refresh(); else refresh();
+  }
+  function applyLens(lens) {
+    state.lens = lens;
+    localStorage.setItem("moa_lens", lens);
+    const btn = lensToggleEl.querySelector(`[data-lens="${lens}"]`);
+    setSegActive(lensToggleEl, btn);
     renderLegend();
     render();
+  }
+
+  viewToggleEl.addEventListener("click", e => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    applyView(btn.dataset.view, true);
+  });
+  lensToggleEl.addEventListener("click", e => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    applyLens(btn.dataset.lens);
   });
 
   function passesFilter(p) {
@@ -342,7 +406,6 @@
   }
 
   function filteredHierarchyData() {
-    // deep clone with filtered children, drop empty categories
     const clone = { name: raw.name, children: [] };
     raw.children.forEach(cat => {
       const kids = cat.children.filter(p => passesFilter({ ...p, categoryKey: cat.key }));
@@ -363,8 +426,8 @@
       .tile(d3.treemapSquarify.ratio(1.4))
       .size([width, height])
       .paddingOuter(6)
-      .paddingTop(d => d.depth === 1 ? 26 : 0)
-      .paddingInner(d => d.depth === 0 ? 3 : 2)
+      .paddingTop(d => d.depth === 1 ? 28 : 0)
+      .paddingInner(d => d.depth === 0 ? 4 : 2)
       .round(true)(root);
   }
 
@@ -374,42 +437,57 @@
   }
 
   function colorFor(d) {
-    if (d.depth === 1) return "#171b24";
+    if (d.depth === 1) return "#18181b";
     if (state.lens === "category") {
       const cat = d.parent, siblings = cat.children, i = siblings.indexOf(d);
       const base = d3.hsl(palette(cat.data.key));
-      base.l = Math.min(0.78, 0.42 + (i / Math.max(siblings.length - 1, 1)) * 0.28);
-      base.s = Math.max(0.35, base.s);
+      base.l = Math.min(0.76, 0.44 + (i / Math.max(siblings.length - 1, 1)) * 0.24);
+      base.s = Math.max(0.32, base.s * 0.88);
       return base.toString();
     }
     if (state.lens === "maintenance") return maintColor[d.data.maintenance] || maintColor.unknown;
     if (state.lens === "traction") return tractionColor(d.data.traction);
-    return "#6ee7ff";
+    return "#22d3ee";
   }
 
+  // CSS transitions on width/height/transform do the animating — we just need
+  // to always set real numeric attrs (never rely on a d3 .transition() chain,
+  // which silently no-ops if geometry ever comes from a re-parented hierarchy node).
   function renderMap() {
     const nodes = currentFocus === root
       ? root.descendants().filter(d => d.depth === 1 || d.depth === 2)
       : currentFocus.children.slice();
 
     const sel = g.selectAll("g.node").data(nodes, d => d.data.full_name || d.data.key || d.data.name);
-    sel.exit().remove();
-    const enter = sel.enter().append("g").attr("class", "node");
-    enter.append("rect");
+
+    sel.exit()
+      .style("opacity", 1)
+      .each(function () { this.style.opacity = 0; })
+      .transition().duration(220).remove();
+
+    const enter = sel.enter().append("g").attr("class", "node")
+      .attr("transform", d => `translate(${d.x0},${d.y0})`)
+      .style("opacity", 0);
+    enter.append("rect").attr("width", d => Math.max(0, d.x1 - d.x0)).attr("height", 0);
     enter.append("text").attr("class", "label");
+
+    requestAnimationFrame(() => { enter.style("opacity", 1); });
+
     const merged = enter.merge(sel);
 
     merged.select("rect")
       .attr("fill", colorFor)
-      .attr("stroke", d => d.depth === 1 ? "#3a4152" : "rgba(11,13,18,.55)")
-      .attr("rx", d => d.depth === 1 ? 8 : 4)
+      .attr("stroke", d => d.depth === 1 ? "#3f3f46" : "rgba(9,9,11,.6)")
+      .attr("rx", d => d.depth === 1 ? 10 : 6)
       .attr("width", d => Math.max(0, d.x1 - d.x0))
       .attr("height", d => Math.max(0, d.y1 - d.y0));
 
     merged.select("text.label")
       .attr("class", d => d.depth === 1 ? "cat-label" : "sub-label")
       .style("font-size", d => fontSizeFor(d) + "px")
-      .style("fill", d => d.depth === 1 ? "var(--text)" : (state.lens === "category" ? "rgba(0,0,0,.78)" : "#0b0d12"))
+      .style("fill", d => d.depth === 1 ? "#f4f4f5" : (state.lens === "category" ? "rgba(0,0,0,.82)" : "#0b0d12"))
+      .attr("x", 9).attr("y", d => d.depth === 1 ? 19 : 17)
+      .style("opacity", d => (d.x1 - d.x0) > 34 && (d.y1 - d.y0) > 14 ? 1 : 0)
       .text(d => {
         const w = d.x1 - d.x0;
         const maxChars = Math.floor(w / (fontSizeFor(d) * 0.58));
@@ -432,9 +510,9 @@
   function showTooltip(event, d) {
     const p = d.data;
     tooltip.html(`
-      <div class="t-name">${p.name}</div>
-      <div>${p.description}</div>
-      <div class="t-meta">
+      <div class="font-bold text-accent mb-1">${p.name}</div>
+      <div class="text-zinc-300">${p.description}</div>
+      <div class="flex gap-3 flex-wrap mt-2 text-[11.5px] text-zinc-500">
         <span>⭐ ${p.stars.toLocaleString()}</span>
         <span>🍴 ${p.forks.toLocaleString()}</span>
         <span>${p.language || "—"}</span>
@@ -456,8 +534,11 @@
     while (n) { chain.unshift(n); n = n.parent; }
     breadcrumb.html("");
     chain.forEach((d, i) => {
-      if (i > 0) breadcrumb.append("span").attr("class", "sep").text("›");
-      breadcrumb.append("span").attr("class", "crumb").text(d.data.name).on("click", () => zoomTo(d));
+      if (i > 0) breadcrumb.append("span").attr("class", "text-zinc-600 text-xs").text("›");
+      breadcrumb.append("span")
+        .attr("class", "cursor-pointer text-xs px-2.5 py-1 rounded-full bg-black/50 border border-white/[.08] text-zinc-300 hover:text-accent hover:border-accent/40 backdrop-blur-xl transition-colors")
+        .text(d.data.name)
+        .on("click", () => zoomTo(d));
     });
   }
 
@@ -480,19 +561,19 @@
     const el = document.getElementById("legend-footer");
     if (state.lens === "maintenance") {
       el.innerHTML = `Engineering lens — color = maintenance health.
-        <div class="legend-row" style="margin-top:6px">
-          <span><span class="dot" style="background:${maintColor.active}"></span>Active</span>
-          <span><span class="dot" style="background:${maintColor.moderate}"></span>Moderate</span>
-          <span><span class="dot" style="background:${maintColor.stale}"></span>Stale</span>
-          <span><span class="dot" style="background:${maintColor.archived}"></span>Archived</span>
+        <div class="flex gap-3 flex-wrap items-center mt-1.5">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:${maintColor.active}"></span>Active</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:${maintColor.moderate}"></span>Moderate</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:${maintColor.stale}"></span>Stale</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:${maintColor.archived}"></span>Archived</span>
         </div>`;
     } else if (state.lens === "traction") {
-      el.innerHTML = `Product lens — color = traction (stars per day since creation), a proxy for momentum.
-        <div class="legend-row" style="margin-top:6px">
-          <span><span class="dot" style="background:#1e293b"></span>Low</span>
-          <span><span class="dot" style="background:#3b82f6"></span></span>
-          <span><span class="dot" style="background:#a78bfa"></span></span>
-          <span><span class="dot" style="background:#f472b6"></span>High</span>
+      el.innerHTML = `Product lens — color = traction (stars/day since creation), a momentum proxy.
+        <div class="flex gap-3 flex-wrap items-center mt-1.5">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:#27272a"></span>Low</span>
+          <span class="w-2 h-2 rounded-full inline-block" style="background:#3b82f6"></span>
+          <span class="w-2 h-2 rounded-full inline-block" style="background:#a78bfa"></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background:#f472b6"></span>High</span>
         </div>`;
     } else {
       el.innerHTML = "Rectangle area ∝ GitHub stars. Click a category to zoom in, background to zoom out, a project to open details.";
@@ -521,71 +602,162 @@
     });
 
     const container = document.getElementById("tableView");
-    const table = document.createElement("table");
-    const thead = document.createElement("thead");
-    const trh = document.createElement("tr");
-    COLS.forEach(c => {
-      const th = document.createElement("th");
-      th.textContent = c.label + (state.sortCol === c.key ? (state.sortDir === 1 ? " ▲" : " ▼") : "");
-      th.className = state.sortCol === c.key ? "sorted" : "";
-      th.addEventListener("click", () => {
-        if (state.sortCol === c.key) state.sortDir *= -1;
-        else { state.sortCol = c.key; state.sortDir = -1; }
-        renderTable();
-      });
-      trh.appendChild(th);
-    });
-    thead.appendChild(trh);
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
-    rows.forEach(p => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="name">${p.name}</td>
-        <td>${p.category}</td>
-        <td>${p.stars.toLocaleString()}</td>
-        <td>${p.forks.toLocaleString()}</td>
-        <td>${p.language || "—"}</td>
-        <td>${p.license || '<span class="risk">none</span>'}</td>
-        <td><span class="badge ${p.maintenance}">${p.maintenance}</span></td>
-        <td>${p.traction.toLocaleString()}</td>
-      `;
-      tr.addEventListener("click", () => openDetail(p));
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    container.innerHTML = "";
-    container.appendChild(table);
 
     if (!rows.length) {
-      container.innerHTML = '<p style="color:var(--muted);padding:20px;">No projects match the current filters.</p>';
+      container.innerHTML = '<p class="text-zinc-500 text-sm py-10 text-center">No projects match the current filters.</p>';
+      return;
     }
+
+    let html = '<table class="w-full border-collapse text-[12.5px]"><thead><tr class="text-left">';
+    COLS.forEach(c => {
+      const sorted = state.sortCol === c.key;
+      html += `<th data-col="${c.key}"
+        class="sticky top-0 bg-[#0a0a0c]/95 backdrop-blur-xl px-3 py-2.5 border-b border-white/[.06] font-semibold cursor-pointer select-none whitespace-nowrap
+               ${sorted ? "text-accent" : "text-zinc-500 hover:text-zinc-300"}">
+        ${c.label}${sorted ? (state.sortDir === 1 ? " ↑" : " ↓") : ""}</th>`;
+    });
+    html += "</tr></thead><tbody>";
+
+    rows.forEach((p, i) => {
+      html += `<tr data-idx="${i}" class="fade-up border-b border-white/[.04] hover:bg-white/[.03] cursor-pointer transition-colors" style="animation-delay:${Math.min(i,20) * 12}ms">
+        <td class="px-3 py-2 font-semibold text-zinc-100">${p.name}</td>
+        <td class="px-3 py-2 text-zinc-400">${p.category}</td>
+        <td class="px-3 py-2 text-zinc-300 tabular-nums">${p.stars.toLocaleString()}</td>
+        <td class="px-3 py-2 text-zinc-400 tabular-nums">${p.forks.toLocaleString()}</td>
+        <td class="px-3 py-2 text-zinc-400">${p.language || "—"}</td>
+        <td class="px-3 py-2 ${p.license ? "text-zinc-400" : "text-orange-400"}">${p.license || "none"}</td>
+        <td class="px-3 py-2"><span class="inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${maintBadgeClass[p.maintenance]}">${p.maintenance}</span></td>
+        <td class="px-3 py-2 text-zinc-400 tabular-nums">${p.traction.toLocaleString()}</td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    container.innerHTML = html;
+
+    container.querySelectorAll("thead th").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.col;
+        if (state.sortCol === key) state.sortDir *= -1;
+        else { state.sortCol = key; state.sortDir = -1; }
+        renderTable();
+      });
+    });
+    container.querySelectorAll("tbody tr").forEach(tr => {
+      tr.addEventListener("click", () => openDetail(rows[+tr.dataset.idx]));
+    });
   }
 
   // ================= DETAIL PANEL =================
   const detailEl = document.getElementById("detail");
   document.getElementById("closeDetail").addEventListener("click", () => detailEl.classList.remove("open"));
 
+  function metricCard(label, value) {
+    return `<div class="bg-white/[.04] rounded-xl px-3 py-2.5">
+      <div class="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">${label}</div>
+      <div class="text-[15px] font-semibold text-zinc-100">${value}</div>
+    </div>`;
+  }
+
   function openDetail(p) {
     document.getElementById("detailBody").innerHTML = `
-      <h2>${p.name}</h2>
-      <div class="full-name">${p.full_name}</div>
-      <p class="desc">${p.description}</p>
-      <div class="metric-grid">
-        <div class="metric"><div class="k">Stars</div><div class="v">⭐ ${p.stars.toLocaleString()}</div></div>
-        <div class="metric"><div class="k">Forks</div><div class="v">🍴 ${p.forks.toLocaleString()}</div></div>
-        <div class="metric"><div class="k">Open issues</div><div class="v">${p.open_issues.toLocaleString()}</div></div>
-        <div class="metric"><div class="k">Traction</div><div class="v">${p.traction.toLocaleString()}/day</div></div>
-        <div class="metric"><div class="k">Language</div><div class="v">${p.language || "—"}</div></div>
-        <div class="metric"><div class="k">License</div><div class="v">${p.license || '<span class="risk">none</span>'}</div></div>
-        <div class="metric"><div class="k">Maintenance</div><div class="v"><span class="badge ${p.maintenance}">${p.maintenance}</span></div></div>
-        <div class="metric"><div class="k">Last push</div><div class="v">${p.days_since_push != null ? p.days_since_push + "d ago" : "—"}</div></div>
+      <h2 class="text-lg font-bold text-accent mb-0.5">${p.name}</h2>
+      <div class="text-[11.5px] text-zinc-500 mb-3">${p.full_name}</div>
+      <p class="text-[13.5px] leading-relaxed text-zinc-300 mb-4">${p.description}</p>
+      <div class="grid grid-cols-2 gap-2.5 mb-5">
+        ${metricCard("Stars", "⭐ " + p.stars.toLocaleString())}
+        ${metricCard("Forks", "🍴 " + p.forks.toLocaleString())}
+        ${metricCard("Open issues", p.open_issues.toLocaleString())}
+        ${metricCard("Traction", p.traction.toLocaleString() + "/day")}
+        ${metricCard("Language", p.language || "—")}
+        ${metricCard("License", p.license ? p.license : '<span class="text-orange-400">none</span>')}
+        ${metricCard("Maintenance", `<span class="inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${maintBadgeClass[p.maintenance]}">${p.maintenance}</span>`)}
+        ${metricCard("Last push", p.days_since_push != null ? p.days_since_push + "d ago" : "—")}
       </div>
-      <a class="open-link" href="${p.url}" target="_blank" rel="noopener">Open on GitHub ↗</a>
+      <a href="${p.url}" target="_blank" rel="noopener"
+        class="block text-center bg-accent text-zinc-900 font-semibold text-sm py-2.5 rounded-full hover:brightness-110 active:scale-[.98] transition">
+        Open on GitHub ↗
+      </a>
     `;
     detailEl.classList.add("open");
   }
+
+  // ================= keyboard shortcuts =================
+  const searchEl = document.getElementById("search");
+  document.addEventListener("keydown", e => {
+    const inInput = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+    if (e.key === "/" && !inInput) { e.preventDefault(); searchEl.focus(); return; }
+    if (e.key === "Escape") {
+      if (!document.getElementById("tourCallout").classList.contains("hidden")) { endTour(); return; }
+      if (detailEl.classList.contains("open")) { detailEl.classList.remove("open"); return; }
+      if (state.search) { searchEl.value = ""; state.search = ""; searchEl.blur(); refresh(); return; }
+    }
+    if (inInput) return;
+    if (e.key === "1") applyView("map", true);
+    if (e.key === "2") applyView("table", true);
+    if (e.key === "[") { const order = ["category","maintenance","traction"]; applyLens(order[(order.indexOf(state.lens) + 2) % 3]); }
+    if (e.key === "]") { const order = ["category","maintenance","traction"]; applyLens(order[(order.indexOf(state.lens) + 1) % 3]); }
+  });
+
+  // ================= onboarding tour =================
+  const TOUR_STEPS = [
+    { el: () => document.querySelector("header h1"), text: "This maps 84 live AI-agent projects across 7 categories, sized by GitHub stars — pulled fresh from the GitHub API." },
+    { el: () => viewToggleEl, text: "Map to explore visually. Table to compare and sort — same data, your call. (Press 1 / 2)" },
+    { el: () => lensToggleEl, text: "Two lenses: Engineering — is it safe to depend on. Product — is it actually gaining ground. (Press [ / ])" },
+    { el: () => document.querySelector("aside"), text: "Filter by category, maintenance health, or minimum stars. Click a category's dot to isolate it. Press / to search anytime." },
+  ];
+  let tourIdx = 0;
+  const highlightEl = document.getElementById("tourHighlight");
+  const calloutEl = document.getElementById("tourCallout");
+
+  function showTourStep(i) {
+    tourIdx = i;
+    const step = TOUR_STEPS[i];
+    const target = step.el();
+    if (!target) { endTour(); return; }
+    const r = target.getBoundingClientRect();
+    const pad = 8;
+    highlightEl.style.top = (r.top - pad) + "px";
+    highlightEl.style.left = (r.left - pad) + "px";
+    highlightEl.style.width = (r.width + pad * 2) + "px";
+    highlightEl.style.height = (r.height + pad * 2) + "px";
+
+    let calloutTop = r.bottom + 14;
+    let calloutLeft = Math.min(Math.max(r.left, 12), window.innerWidth - 296);
+    if (calloutTop + 130 > window.innerHeight) calloutTop = r.top - 150;
+    calloutEl.style.top = calloutTop + "px";
+    calloutEl.style.left = calloutLeft + "px";
+
+    calloutEl.innerHTML = `
+      <div class="bg-[#0d0d10] border border-white/10 rounded-2xl shadow-2xl p-4 fade-up">
+        <p class="text-[13px] leading-relaxed text-zinc-200 mb-3">${step.text}</p>
+        <div class="flex items-center justify-between">
+          <div class="flex gap-1.5">
+            ${TOUR_STEPS.map((_, j) => `<span class="w-1.5 h-1.5 rounded-full ${j === i ? "bg-accent" : "bg-white/15"}"></span>`).join("")}
+          </div>
+          <div class="flex gap-2">
+            <button id="tourSkip" class="text-[12px] text-zinc-500 hover:text-zinc-300 px-2 py-1">Skip</button>
+            <button id="tourNext" class="text-[12px] font-semibold bg-accent text-zinc-900 rounded-full px-3.5 py-1.5 hover:brightness-110">
+              ${i === TOUR_STEPS.length - 1 ? "Done" : "Next"}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById("tourSkip").addEventListener("click", endTour);
+    document.getElementById("tourNext").addEventListener("click", () => {
+      if (i === TOUR_STEPS.length - 1) endTour(); else showTourStep(i + 1);
+    });
+  }
+
+  function startTour() {
+    highlightEl.classList.remove("hidden");
+    calloutEl.classList.remove("hidden");
+    showTourStep(0);
+  }
+  function endTour() {
+    highlightEl.classList.add("hidden");
+    calloutEl.classList.add("hidden");
+    localStorage.setItem("moa_onboarded", "1");
+  }
+  document.getElementById("tourReplay").addEventListener("click", startTour);
 
   // ================= refresh / boot =================
   function refresh() {
@@ -596,16 +768,25 @@
     if (state.view === "map") renderMap();
     else renderTable();
   }
-
   function render() {
     if (state.view === "map") renderMap();
     else renderTable();
   }
 
-  window.addEventListener("resize", () => { measure(); if (state.view === "map") { layout(); if (currentFocus !== root) zoomTo(currentFocus); else renderMap(); } });
+  window.addEventListener("resize", () => {
+    measure();
+    if (state.view === "map") { layout(); if (currentFocus !== root) zoomTo(currentFocus); else renderMap(); }
+  });
 
-  renderLegend();
+  // boot
+  applyView(state.view, false);
+  applyLens(state.lens);
+  syncCatRowStyles();
   refresh();
+
+  if (!localStorage.getItem("moa_onboarded")) {
+    setTimeout(startTour, 500);
+  }
 })();
 </script>
 </body>

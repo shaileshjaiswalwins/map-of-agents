@@ -62,8 +62,14 @@ Simulation is comparatively thin, i.e. more open ground.
   apply identically to either.
 - **Interaction**: category → zoom in (Map) or filter (Table); click a project for a detail panel
   (stars, forks, open issues, traction, license, maintenance, last push) with a link out to GitHub;
-  sidebar filters by category, maintenance status, and minimum stars; free-text search.
-- **No build step** — a static `docs/index.html` + `docs/data.json`, hosted directly from GitHub Pages.
+  sidebar filters by category, maintenance status, and minimum stars; free-text search. Click a
+  category's color dot to isolate it (click again to restore).
+- **Onboarding**: a short spotlight tour on first visit walks through Map/Table, the two lenses,
+  and the filters — skippable, and replayable anytime via the `?` button in the header.
+- **Keyboard shortcuts**: `/` search, `Esc` close panel/clear search, `1`/`2` switch view, `[`/`]`
+  cycle lenses. Last-used view and lens are remembered (`localStorage`) between visits.
+- **No build step** — a static `docs/index.html` + `docs/data.json` styled with Tailwind (CDN) and
+  D3, hosted directly from GitHub Pages.
 
 ## Categories
 
