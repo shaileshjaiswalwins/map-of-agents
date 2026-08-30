@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map of Agents</title>
+<meta name="description" content="A zoomable map of the AI agent ecosystem — frameworks, autonomous agents, protocols, memory, evaluation, coding agents, and multi-agent research — sized by GitHub stars. Inspired by anvaka's Map of GitHub.">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d12;
+    --panel: #12151c;
+    --border: #262b36;
+    --text: #e6e9ef;
+    --muted: #8b93a3;
+    --accent: #6ee7ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px;
+    background: linear-gradient(180deg, rgba(11,13,18,.95), rgba(11,13,18,.75));
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: .2px; white-space: nowrap; }
+  header h1 span { color: var(--accent); }
+  header .sub { font-size: 12px; color: var(--muted); display: none; }
+  @media (min-width: 700px) { header .sub { display: inline; } }
+
+  #search {
+    margin-left: auto;
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: 7px; font-size: 13px; width: 200px; outline: none;
+  }
+  #search:focus { border-color: var(--accent); }
+
+  #breadcrumb {
+    position: fixed; top: 46px; left: 16px; z-index: 9;
+    font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 70vw;
+  }
+  #breadcrumb span.crumb { cursor: pointer; padding: 3px 8px; border-radius: 5px; background: var(--panel); border: 1px solid var(--border); }
+  #breadcrumb span.crumb:hover { border-color: var(--accent); color: var(--accent); }
+  #breadcrumb span.sep { color: #454c5c; }
+
+  #chart { position: fixed; inset: 0; top: 0; }
+  svg { display: block; width: 100%; height: 100%; }
+
+  .node rect {
+    stroke-width: 1.2px;
+    cursor: pointer;
+  }
+  .node text { pointer-events: none; fill: #0b0d12; font-weight: 600; }
+  .node .cat-label { fill: var(--text); font-weight: 700; }
+  .node .sub-label { fill: rgba(255,255,255,.72); font-weight: 500; }
+
+  #tooltip {
+    position: fixed; z-index: 20; pointer-events: none;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 12.5px; max-width: 280px; line-height: 1.45;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    opacity: 0; transform: translateY(4px); transition: opacity .12s ease, transform .12s ease;
+  }
+  #tooltip.show { opacity: 1; transform: translateY(0); }
+  #tooltip .t-name { font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+  #tooltip .t-stars { color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+
+  #legend {
+    position: fixed; bottom: 14px; left: 16px; z-index: 9;
+    font-size: 11px; color: var(--muted); background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; max-width: 260px;
+  }
+  #hint {
+    position: fixed; bottom: 14px; right: 16px; z-index: 9;
+    font-size: 11px; color: var(--muted); background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  }
+
+  ::selection { background: rgba(110,231,255,.3); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Map of <span>Agents</span></h1>
+  <span class="sub">a zoomable map of the AI agent ecosystem, sized by GitHub stars</span>
+  <input id="search" type="text" placeholder="Search agents & frameworks…" autocomplete="off">
+</header>
+<div id="breadcrumb"></div>
+<div id="chart"></div>
+<div id="tooltip"></div>
+<div id="legend">Rectangle area ∝ GitHub stars. Click a category to zoom in, click center to zoom out.</div>
+<div id="hint">Inspired by <em>anvaka/map-of-github</em></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(async function () {
+  const data = await d3.json("data.json");
+
+  const palette = d3.scaleOrdinal()
+    .domain(data.children.map(d => d.key))
+    .range(["#6ee7ff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#f97316", "#60a5fa", "#c084fc"]);
+
+  function colorFor(catKey, i, n) {
+    const base = d3.hsl(palette(catKey));
+    base.l = Math.min(0.78, 0.42 + (i / Math.max(n - 1, 1)) * 0.28);
+    base.s = Math.max(0.35, base.s);
+    return base.toString();
+  }
+
+  const svgEl = d3.select("#chart").append("svg");
+  const g = svgEl.append("g");
+  const tooltip = d3.select("#tooltip");
+  const breadcrumb = d3.select("#breadcrumb");
+
+  let width, height;
+  function measure() {
+    const el = document.getElementById("chart");
+    width = el.clientWidth;
+    height = el.clientHeight;
+  }
+  measure();
+
+  const root = d3.hierarchy(data)
+    .sum(d => d.value || 0)
+    .sort((a, b) => b.value - a.value);
+
+  let currentFocus = root;
+
+  function layout() {
+    d3.treemap()
+      .tile(d3.treemapSquarify.ratio(1.4))
+      .size([width, height])
+      .paddingOuter(6)
+      .paddingTop(d => d.depth === 1 ? 26 : (d.depth === 0 ? 0 : 4))
+      .paddingInner(3)
+      .round(true)(root);
+  }
+  layout();
+
+  function fontSizeFor(d) {
+    const w = d.x1 - d.x0, h = d.y1 - d.y0;
+    return Math.max(9, Math.min(15, Math.min(w / (d.data.name.length * 0.62 || 1), h * 0.4)));
+  }
+
+  function render() {
+    const nodes = currentFocus === root
+      ? root.descendants().filter(d => d.depth === 1 || d.depth === 2)
+      : currentFocus.children.slice();
+
+    const sel = g.selectAll("g.node").data(nodes, d => d.data.repo || d.data.key || d.data.name);
+
+    sel.exit().remove();
+
+    const enter = sel.enter().append("g").attr("class", "node");
+    enter.append("rect");
+    enter.append("text").attr("class", "label");
+
+    const merged = enter.merge(sel);
+
+    merged.select("rect")
+      .attr("fill", d => {
+        if (d.depth === 1) return "#171b24";
+        const cat = d.parent;
+        const siblings = cat.children;
+        const i = siblings.indexOf(d);
+        return colorFor(cat.data.key, i, siblings.length);
+      })
+      .attr("stroke", d => d.depth === 1 ? "#3a4152" : "rgba(11,13,18,.55)")
+      .attr("rx", d => d.depth === 1 ? 8 : 4);
+
+    merged.select("text.label")
+      .attr("class", d => d.depth === 1 ? "cat-label" : "sub-label")
+      .style("font-size", d => fontSizeFor(d) + "px")
+      .text(d => {
+        const w = d.x1 - d.x0;
+        const maxChars = Math.floor(w / (fontSizeFor(d) * 0.58));
+        return d.data.name.length > maxChars ? d.data.name.slice(0, Math.max(3, maxChars - 1)) + "…" : d.data.name;
+      });
+
+    merged
+      .style("cursor", d => d.depth === 1 ? "zoom-in" : "pointer")
+      .on("mouseenter", (event, d) => {
+        if (d.depth === 2) showTooltip(event, d);
+      })
+      .on("mousemove", (event, d) => {
+        if (d.depth === 2) positionTooltip(event);
+      })
+      .on("mouseleave", () => hideTooltip())
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        if (d.depth === 1) {
+          zoomTo(d);
+        } else if (d.depth === 2 && d.data.url) {
+          window.open(d.data.url, "_blank", "noopener");
+        }
+      });
+
+    positionAll();
+  }
+
+  function positionAll() {
+    g.selectAll("g.node")
+      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+    g.selectAll("g.node rect")
+      .attr("width", d => Math.max(0, d.x1 - d.x0))
+      .attr("height", d => Math.max(0, d.y1 - d.y0));
+
+    g.selectAll("g.node text.label")
+      .attr("x", 8)
+      .attr("y", d => d.depth === 1 ? 18 : 16)
+      .style("opacity", d => (d.x1 - d.x0) > 34 && (d.y1 - d.y0) > 14 ? 1 : 0);
+  }
+
+  function showTooltip(event, d) {
+    tooltip.html(`
+      <div class="t-name">${d.data.name}</div>
+      <div>${d.data.description || ""}</div>
+      <div class="t-stars">⭐ ${d.data.value.toLocaleString()} stars &middot; ${d.parent.data.name}</div>
+    `).classed("show", true);
+    positionTooltip(event);
+  }
+  function positionTooltip(event) {
+    const pad = 16;
+    let x = event.clientX + pad, y = event.clientY + pad;
+    const tw = 280, th = 90;
+    if (x + tw > window.innerWidth) x = event.clientX - tw - pad;
+    if (y + th > window.innerHeight) y = event.clientY - th - pad;
+    tooltip.style("left", x + "px").style("top", y + "px");
+  }
+  function hideTooltip() { tooltip.classed("show", false); }
+
+  function updateBreadcrumb() {
+    const chain = [];
+    let n = currentFocus;
+    while (n) { chain.unshift(n); n = n.parent; }
+    breadcrumb.html("");
+    chain.forEach((d, i) => {
+      if (i > 0) breadcrumb.append("span").attr("class", "sep").text("›");
+      breadcrumb.append("span").attr("class", "crumb")
+        .text(d.data.name)
+        .on("click", () => zoomTo(d));
+    });
+  }
+
+  function zoomTo(d) {
+    currentFocus = d;
+    if (d === root) {
+      layout();
+    } else {
+      const sub = d3.hierarchy(d.data).sum(dd => dd.value || 0).sort((a, b) => b.value - a.value);
+      d3.treemap()
+        .tile(d3.treemapSquarify.ratio(1.4))
+        .size([width, height])
+        .paddingOuter(12)
+        .paddingInner(6)
+        .round(true)(sub);
+      d.children.forEach((c, i) => {
+        c.x0 = sub.children[i].x0; c.y0 = sub.children[i].y0;
+        c.x1 = sub.children[i].x1; c.y1 = sub.children[i].y1;
+      });
+    }
+    updateBreadcrumb();
+    render();
+  }
+
+  svgEl.on("click", () => { if (currentFocus !== root) zoomTo(root); });
+
+  window.addEventListener("resize", () => {
+    measure();
+    layout();
+    if (currentFocus !== root) zoomTo(currentFocus);
+    else render();
+  });
+
+  // search
+  const searchInput = document.getElementById("search");
+  searchInput.addEventListener("input", () => {
+    const q = searchInput.value.trim().toLowerCase();
+    g.selectAll("g.node rect").attr("opacity", d => {
+      if (!q) return 1;
+      if (d.depth === 1) return 1;
+      return d.data.name.toLowerCase().includes(q) ? 1 : 0.12;
+    });
+  });
+
+  updateBreadcrumb();
+  render();
+})();
+</script>
+</body>
+</html>
