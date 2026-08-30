@@ -4,114 +4,332 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Map of Agents</title>
-<meta name="description" content="A zoomable map of the AI agent ecosystem — frameworks, autonomous agents, protocols, memory, evaluation, coding agents, and multi-agent research — sized by GitHub stars. Inspired by anvaka's Map of GitHub.">
+<meta name="description" content="A live, data-driven map of the AI agent ecosystem — sized by stars, colored by maintenance health or traction, with Engineering and Product lenses for decision-makers.">
 <style>
   :root {
     color-scheme: dark;
     --bg: #0b0d12;
     --panel: #12151c;
+    --panel2: #171b24;
     --border: #262b36;
     --text: #e6e9ef;
     --muted: #8b93a3;
     --accent: #6ee7ff;
+    --active: #34d399;
+    --moderate: #fbbf24;
+    --stale: #f97316;
+    --archived: #6b7280;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+  button, select, input { font-family: inherit; }
+
+  #app { display: flex; flex-direction: column; height: 100%; }
 
   header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-    display: flex; align-items: center; gap: 14px;
-    padding: 10px 16px;
-    background: linear-gradient(180deg, rgba(11,13,18,.95), rgba(11,13,18,.75));
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(6px);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    z-index: 10;
   }
-  header h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: .2px; white-space: nowrap; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; white-space: nowrap; }
   header h1 span { color: var(--accent); }
-  header .sub { font-size: 12px; color: var(--muted); display: none; }
-  @media (min-width: 700px) { header .sub { display: inline; } }
+  .stats { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .stats b { color: var(--text); font-weight: 650; }
+
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+  .seg button {
+    background: var(--panel2); color: var(--muted); border: none; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; border-right: 1px solid var(--border);
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button.active { background: var(--accent); color: #05262c; font-weight: 650; }
+
+  select.control {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    padding: 6px 8px; border-radius: 7px; font-size: 12px; outline: none;
+  }
 
   #search {
     margin-left: auto;
-    background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    padding: 7px 10px; border-radius: 7px; font-size: 13px; width: 200px; outline: none;
+    background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: 7px; font-size: 13px; width: 190px; outline: none;
   }
   #search:focus { border-color: var(--accent); }
 
-  #breadcrumb {
-    position: fixed; top: 46px; left: 16px; z-index: 9;
-    font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 70vw;
+  .legend-row { display: flex; gap: 10px; align-items: center; font-size: 11px; color: var(--muted); }
+  .legend-row .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+  #body { flex: 1; display: flex; min-height: 0; }
+
+  aside {
+    width: 220px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--panel);
+    padding: 14px 14px; overflow-y: auto; font-size: 12.5px;
   }
+  aside h3 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+    margin: 16px 0 8px; }
+  aside h3:first-child { margin-top: 0; }
+  .chip-list { display: flex; flex-direction: column; gap: 4px; }
+  .chip {
+    display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 6px; cursor: pointer;
+    color: var(--muted); user-select: none;
+  }
+  .chip:hover { background: var(--panel2); }
+  .chip input { accent-color: var(--accent); }
+  .chip.on { color: var(--text); }
+  .chip .swatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+  .range-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .range-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .range-val { font-size: 11px; color: var(--muted); min-width: 44px; text-align: right; }
+  .reset-btn {
+    margin-top: 14px; width: 100%; background: var(--panel2); color: var(--muted); border: 1px solid var(--border);
+    padding: 6px; border-radius: 6px; font-size: 11.5px; cursor: pointer;
+  }
+  .reset-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  main { flex: 1; position: relative; min-width: 0; }
+
+  #mapView { position: absolute; inset: 0; }
+  #chart { position: absolute; inset: 0; }
+  #breadcrumb { position: absolute; top: 10px; left: 10px; z-index: 5; font-size: 12px; color: var(--muted);
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 60%; }
   #breadcrumb span.crumb { cursor: pointer; padding: 3px 8px; border-radius: 5px; background: var(--panel); border: 1px solid var(--border); }
   #breadcrumb span.crumb:hover { border-color: var(--accent); color: var(--accent); }
   #breadcrumb span.sep { color: #454c5c; }
-
-  #chart { position: fixed; inset: 0; top: 0; }
   svg { display: block; width: 100%; height: 100%; }
-
-  .node rect {
-    stroke-width: 1.2px;
-    cursor: pointer;
-  }
   .node text { pointer-events: none; fill: #0b0d12; font-weight: 600; }
   .node .cat-label { fill: var(--text); font-weight: 700; }
-  .node .sub-label { fill: rgba(255,255,255,.72); font-weight: 500; }
+  .node .sub-label { fill: rgba(0,0,0,.78); font-weight: 600; }
+
+  #tableView { position: absolute; inset: 0; overflow: auto; padding: 10px 16px 40px; display: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    position: sticky; top: 0; background: var(--bg); text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--border); color: var(--muted); font-weight: 600; cursor: pointer;
+    white-space: nowrap; user-select: none;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.sorted { color: var(--accent); }
+  tbody td { padding: 7px 10px; border-bottom: 1px solid #1a1e28; vertical-align: top; }
+  tbody tr:hover { background: var(--panel2); }
+  tbody tr { cursor: pointer; }
+  td.name { font-weight: 600; }
+  td.desc { color: var(--muted); max-width: 340px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 650; }
+  .badge.active { background: rgba(52,211,153,.16); color: var(--active); }
+  .badge.moderate { background: rgba(251,191,36,.16); color: var(--moderate); }
+  .badge.stale { background: rgba(249,115,22,.16); color: var(--stale); }
+  .badge.archived { background: rgba(107,114,128,.2); color: var(--archived); }
+  .risk { color: var(--stale); font-size: 11px; }
 
   #tooltip {
-    position: fixed; z-index: 20; pointer-events: none;
+    position: fixed; z-index: 30; pointer-events: none;
     background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 12px; font-size: 12.5px; max-width: 280px; line-height: 1.45;
+    padding: 10px 12px; font-size: 12.5px; max-width: 300px; line-height: 1.45;
     box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    opacity: 0; transform: translateY(4px); transition: opacity .12s ease, transform .12s ease;
+    opacity: 0; transform: translateY(4px); transition: opacity .1s ease;
   }
-  #tooltip.show { opacity: 1; transform: translateY(0); }
+  #tooltip.show { opacity: 1; }
   #tooltip .t-name { font-weight: 700; color: var(--accent); margin-bottom: 3px; }
-  #tooltip .t-stars { color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+  #tooltip .t-meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap; }
 
-  #legend {
-    position: fixed; bottom: 14px; left: 16px; z-index: 9;
-    font-size: 11px; color: var(--muted); background: var(--panel);
-    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; max-width: 260px;
+  #detail {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 320px; background: var(--panel);
+    border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; z-index: 8;
+    transform: translateX(100%); transition: transform .18s ease;
   }
-  #hint {
-    position: fixed; bottom: 14px; right: 16px; z-index: 9;
-    font-size: 11px; color: var(--muted); background: var(--panel);
-    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  #detail.open { transform: translateX(0); }
+  #detail .close { float: right; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
+  #detail h2 { font-size: 16px; margin: 0 0 4px; color: var(--accent); }
+  #detail .full-name { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
+  #detail p.desc { font-size: 13px; line-height: 1.5; color: var(--text); margin: 0 0 16px; }
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--panel2); border-radius: 8px; padding: 8px 10px; }
+  .metric .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .metric .v { font-size: 15px; font-weight: 650; margin-top: 2px; }
+  .open-link {
+    display: block; text-align: center; background: var(--accent); color: #05262c; font-weight: 650;
+    padding: 9px; border-radius: 8px; text-decoration: none; font-size: 13px;
   }
+
+  #legend-footer { position: absolute; bottom: 10px; left: 10px; z-index: 5; font-size: 11px; color: var(--muted);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; max-width: 320px; }
 
   ::selection { background: rgba(110,231,255,.3); }
+  @media (max-width: 900px) { aside { display: none; } #detail { width: 100%; } }
 </style>
 </head>
 <body>
+<div id="app">
+  <header>
+    <h1>Map of <span>Agents</span></h1>
+    <div class="stats" id="stats"></div>
+    <div class="seg" id="viewToggle">
+      <button data-view="map" class="active">Map</button>
+      <button data-view="table">Table</button>
+    </div>
+    <div class="seg" id="lensToggle">
+      <button data-lens="category" class="active">Category</button>
+      <button data-lens="maintenance">Engineering lens</button>
+      <button data-lens="traction">Product lens</button>
+    </div>
+    <input id="search" type="text" placeholder="Search projects…" autocomplete="off">
+  </header>
 
-<header>
-  <h1>Map of <span>Agents</span></h1>
-  <span class="sub">a zoomable map of the AI agent ecosystem, sized by GitHub stars</span>
-  <input id="search" type="text" placeholder="Search agents & frameworks…" autocomplete="off">
-</header>
-<div id="breadcrumb"></div>
-<div id="chart"></div>
+  <div id="body">
+    <aside>
+      <h3>Categories</h3>
+      <div class="chip-list" id="catFilters"></div>
+
+      <h3>Maintenance</h3>
+      <div class="chip-list" id="maintFilters"></div>
+
+      <h3>Min stars: <span class="range-val" id="starsVal">0</span></h3>
+      <div class="range-row">
+        <input type="range" id="starsRange" min="0" max="4" step="1" value="0">
+      </div>
+
+      <button class="reset-btn" id="resetFilters">Reset filters</button>
+    </aside>
+
+    <main>
+      <div id="mapView">
+        <div id="breadcrumb"></div>
+        <div id="chart"></div>
+        <div id="legend-footer"></div>
+      </div>
+      <div id="tableView"></div>
+      <div id="detail">
+        <button class="close" id="closeDetail">✕</button>
+        <div id="detailBody"></div>
+      </div>
+    </main>
+  </div>
+</div>
 <div id="tooltip"></div>
-<div id="legend">Rectangle area ∝ GitHub stars. Click a category to zoom in, click center to zoom out.</div>
-<div id="hint">Inspired by <em>anvaka/map-of-github</em></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
 (async function () {
-  const data = await d3.json("data.json");
+  const raw = await d3.json("data.json");
+  const meta = raw.meta || {};
+  const STAR_STEPS = [0, 1000, 5000, 20000, 100000];
+
+  // ---------- flatten for filtering/table ----------
+  const allCategories = raw.children.map(c => ({ key: c.key, name: c.name }));
+  const allProjects = [];
+  raw.children.forEach(cat => cat.children.forEach(p => allProjects.push({ ...p, category: cat.name, categoryKey: cat.key })));
+
+  const state = {
+    view: "map",
+    lens: "category",
+    search: "",
+    activeCats: new Set(allCategories.map(c => c.key)),
+    activeMaint: new Set(["active", "moderate", "stale", "archived", "unknown"]),
+    minStarsIdx: 0,
+    sortCol: "stars",
+    sortDir: -1,
+  };
 
   const palette = d3.scaleOrdinal()
-    .domain(data.children.map(d => d.key))
-    .range(["#6ee7ff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#f97316", "#60a5fa", "#c084fc"]);
+    .domain(allCategories.map(c => c.key))
+    .range(["#6ee7ff", "#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#f97316", "#60a5fa"]);
 
-  function colorFor(catKey, i, n) {
-    const base = d3.hsl(palette(catKey));
-    base.l = Math.min(0.78, 0.42 + (i / Math.max(n - 1, 1)) * 0.28);
-    base.s = Math.max(0.35, base.s);
-    return base.toString();
+  const maintColor = { active: "#34d399", moderate: "#fbbf24", stale: "#f97316", archived: "#6b7280", unknown: "#3a4152" };
+
+  function tractionColor(t) {
+    // log scale ramp
+    const v = Math.log10(Math.max(t, 0.1));
+    const scale = d3.scaleLinear().domain([-1, 0, 1, 2.5]).range(["#1e293b", "#3b82f6", "#a78bfa", "#f472b6"]).clamp(true);
+    return scale(v);
   }
 
+  // ---------- header stats ----------
+  document.getElementById("stats").innerHTML =
+    `<span><b>${meta.total_projects}</b> projects</span>` +
+    `<span><b>${meta.categories}</b> categories</span>` +
+    `<span><b>${(meta.total_stars/1e6).toFixed(1)}M</b> combined stars</span>` +
+    `<span>snapshot <b>${meta.snapshot_date}</b></span>`;
+
+  // ---------- sidebar filters ----------
+  const catFiltersEl = document.getElementById("catFilters");
+  allCategories.forEach(c => {
+    const row = document.createElement("label");
+    row.className = "chip on";
+    row.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${palette(c.key)}"></span>${c.name}`;
+    row.querySelector("input").addEventListener("change", e => {
+      if (e.target.checked) state.activeCats.add(c.key); else state.activeCats.delete(c.key);
+      row.classList.toggle("on", e.target.checked);
+      refresh();
+    });
+    catFiltersEl.appendChild(row);
+  });
+
+  const maintFiltersEl = document.getElementById("maintFilters");
+  [["active", "Active (<90d)"], ["moderate", "Moderate (<1y)"], ["stale", "Stale (>1y)"], ["archived", "Archived"]].forEach(([k, label]) => {
+    const row = document.createElement("label");
+    row.className = "chip on";
+    row.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${maintColor[k]}"></span>${label}`;
+    row.querySelector("input").addEventListener("change", e => {
+      if (e.target.checked) state.activeMaint.add(k); else state.activeMaint.delete(k);
+      row.classList.toggle("on", e.target.checked);
+      refresh();
+    });
+    maintFiltersEl.appendChild(row);
+  });
+
+  const starsRange = document.getElementById("starsRange");
+  const starsVal = document.getElementById("starsVal");
+  function fmtStars(n) { return n >= 1000 ? (n/1000) + "k" : String(n); }
+  starsRange.addEventListener("input", () => {
+    state.minStarsIdx = +starsRange.value;
+    starsVal.textContent = fmtStars(STAR_STEPS[state.minStarsIdx]);
+    refresh();
+  });
+
+  document.getElementById("resetFilters").addEventListener("click", () => {
+    state.activeCats = new Set(allCategories.map(c => c.key));
+    state.activeMaint = new Set(["active", "moderate", "stale", "archived", "unknown"]);
+    state.minStarsIdx = 0;
+    starsRange.value = 0; starsVal.textContent = "0";
+    document.querySelectorAll("#catFilters input, #maintFilters input").forEach(i => { i.checked = true; i.closest(".chip").classList.add("on"); });
+    document.getElementById("search").value = "";
+    state.search = "";
+    refresh();
+  });
+
+  document.getElementById("search").addEventListener("input", e => {
+    state.search = e.target.value.trim().toLowerCase();
+    refresh();
+  });
+
+  // ---------- view / lens toggles ----------
+  document.getElementById("viewToggle").addEventListener("click", e => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    state.view = btn.dataset.view;
+    document.querySelectorAll("#viewToggle button").forEach(b => b.classList.toggle("active", b === btn));
+    document.getElementById("mapView").style.display = state.view === "map" ? "block" : "none";
+    document.getElementById("tableView").style.display = state.view === "table" ? "block" : "none";
+    refresh();
+  });
+  document.getElementById("lensToggle").addEventListener("click", e => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    state.lens = btn.dataset.lens;
+    document.querySelectorAll("#lensToggle button").forEach(b => b.classList.toggle("active", b === btn));
+    renderLegend();
+    render();
+  });
+
+  function passesFilter(p) {
+    if (!state.activeCats.has(p.categoryKey || p.parent?.data.key)) return false;
+    const status = p.maintenance;
+    if (!state.activeMaint.has(status)) return false;
+    if (p.stars < STAR_STEPS[state.minStarsIdx]) return false;
+    if (state.search && !p.name.toLowerCase().includes(state.search) && !(p.description||"").toLowerCase().includes(state.search)) return false;
+    return true;
+  }
+
+  // ================= MAP VIEW (treemap) =================
   const svgEl = d3.select("#chart").append("svg");
   const g = svgEl.append("g");
   const tooltip = d3.select("#tooltip");
@@ -120,62 +338,78 @@
   let width, height;
   function measure() {
     const el = document.getElementById("chart");
-    width = el.clientWidth;
-    height = el.clientHeight;
+    width = el.clientWidth; height = el.clientHeight;
   }
-  measure();
 
-  const root = d3.hierarchy(data)
-    .sum(d => d.value || 0)
-    .sort((a, b) => b.value - a.value);
+  function filteredHierarchyData() {
+    // deep clone with filtered children, drop empty categories
+    const clone = { name: raw.name, children: [] };
+    raw.children.forEach(cat => {
+      const kids = cat.children.filter(p => passesFilter({ ...p, categoryKey: cat.key }));
+      if (kids.length) clone.children.push({ name: cat.name, key: cat.key, children: kids });
+    });
+    return clone;
+  }
 
-  let currentFocus = root;
+  let root, currentFocus;
+
+  function buildRoot() {
+    root = d3.hierarchy(filteredHierarchyData()).sum(d => d.value || 0).sort((a, b) => b.value - a.value);
+    currentFocus = root;
+  }
 
   function layout() {
     d3.treemap()
       .tile(d3.treemapSquarify.ratio(1.4))
       .size([width, height])
       .paddingOuter(6)
-      .paddingTop(d => d.depth === 1 ? 26 : (d.depth === 0 ? 0 : 4))
-      .paddingInner(3)
+      .paddingTop(d => d.depth === 1 ? 26 : 0)
+      .paddingInner(d => d.depth === 0 ? 3 : 2)
       .round(true)(root);
   }
-  layout();
 
   function fontSizeFor(d) {
     const w = d.x1 - d.x0, h = d.y1 - d.y0;
-    return Math.max(9, Math.min(15, Math.min(w / (d.data.name.length * 0.62 || 1), h * 0.4)));
+    return Math.max(9, Math.min(15, Math.min(w / (d.data.name.length * 0.6 || 1), h * 0.4)));
   }
 
-  function render() {
+  function colorFor(d) {
+    if (d.depth === 1) return "#171b24";
+    if (state.lens === "category") {
+      const cat = d.parent, siblings = cat.children, i = siblings.indexOf(d);
+      const base = d3.hsl(palette(cat.data.key));
+      base.l = Math.min(0.78, 0.42 + (i / Math.max(siblings.length - 1, 1)) * 0.28);
+      base.s = Math.max(0.35, base.s);
+      return base.toString();
+    }
+    if (state.lens === "maintenance") return maintColor[d.data.maintenance] || maintColor.unknown;
+    if (state.lens === "traction") return tractionColor(d.data.traction);
+    return "#6ee7ff";
+  }
+
+  function renderMap() {
     const nodes = currentFocus === root
       ? root.descendants().filter(d => d.depth === 1 || d.depth === 2)
       : currentFocus.children.slice();
 
-    const sel = g.selectAll("g.node").data(nodes, d => d.data.repo || d.data.key || d.data.name);
-
+    const sel = g.selectAll("g.node").data(nodes, d => d.data.full_name || d.data.key || d.data.name);
     sel.exit().remove();
-
     const enter = sel.enter().append("g").attr("class", "node");
     enter.append("rect");
     enter.append("text").attr("class", "label");
-
     const merged = enter.merge(sel);
 
     merged.select("rect")
-      .attr("fill", d => {
-        if (d.depth === 1) return "#171b24";
-        const cat = d.parent;
-        const siblings = cat.children;
-        const i = siblings.indexOf(d);
-        return colorFor(cat.data.key, i, siblings.length);
-      })
+      .attr("fill", colorFor)
       .attr("stroke", d => d.depth === 1 ? "#3a4152" : "rgba(11,13,18,.55)")
-      .attr("rx", d => d.depth === 1 ? 8 : 4);
+      .attr("rx", d => d.depth === 1 ? 8 : 4)
+      .attr("width", d => Math.max(0, d.x1 - d.x0))
+      .attr("height", d => Math.max(0, d.y1 - d.y0));
 
     merged.select("text.label")
       .attr("class", d => d.depth === 1 ? "cat-label" : "sub-label")
       .style("font-size", d => fontSizeFor(d) + "px")
+      .style("fill", d => d.depth === 1 ? "var(--text)" : (state.lens === "category" ? "rgba(0,0,0,.78)" : "#0b0d12"))
       .text(d => {
         const w = d.x1 - d.x0;
         const maxChars = Math.floor(w / (fontSizeFor(d) * 0.58));
@@ -184,113 +418,194 @@
 
     merged
       .style("cursor", d => d.depth === 1 ? "zoom-in" : "pointer")
-      .on("mouseenter", (event, d) => {
-        if (d.depth === 2) showTooltip(event, d);
-      })
-      .on("mousemove", (event, d) => {
-        if (d.depth === 2) positionTooltip(event);
-      })
-      .on("mouseleave", () => hideTooltip())
+      .attr("transform", d => `translate(${d.x0},${d.y0})`)
+      .on("mouseenter", (event, d) => { if (d.depth === 2) showTooltip(event, d); })
+      .on("mousemove", (event, d) => { if (d.depth === 2) positionTooltip(event); })
+      .on("mouseleave", hideTooltip)
       .on("click", (event, d) => {
         event.stopPropagation();
-        if (d.depth === 1) {
-          zoomTo(d);
-        } else if (d.depth === 2 && d.data.url) {
-          window.open(d.data.url, "_blank", "noopener");
-        }
+        if (d.depth === 1) zoomTo(d);
+        else if (d.depth === 2) openDetail(d.data);
       });
-
-    positionAll();
-  }
-
-  function positionAll() {
-    g.selectAll("g.node")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
-
-    g.selectAll("g.node rect")
-      .attr("width", d => Math.max(0, d.x1 - d.x0))
-      .attr("height", d => Math.max(0, d.y1 - d.y0));
-
-    g.selectAll("g.node text.label")
-      .attr("x", 8)
-      .attr("y", d => d.depth === 1 ? 18 : 16)
-      .style("opacity", d => (d.x1 - d.x0) > 34 && (d.y1 - d.y0) > 14 ? 1 : 0);
   }
 
   function showTooltip(event, d) {
+    const p = d.data;
     tooltip.html(`
-      <div class="t-name">${d.data.name}</div>
-      <div>${d.data.description || ""}</div>
-      <div class="t-stars">⭐ ${d.data.value.toLocaleString()} stars &middot; ${d.parent.data.name}</div>
+      <div class="t-name">${p.name}</div>
+      <div>${p.description}</div>
+      <div class="t-meta">
+        <span>⭐ ${p.stars.toLocaleString()}</span>
+        <span>🍴 ${p.forks.toLocaleString()}</span>
+        <span>${p.language || "—"}</span>
+        <span style="color:${maintColor[p.maintenance]}">${p.maintenance}</span>
+      </div>
     `).classed("show", true);
     positionTooltip(event);
   }
   function positionTooltip(event) {
-    const pad = 16;
-    let x = event.clientX + pad, y = event.clientY + pad;
-    const tw = 280, th = 90;
-    if (x + tw > window.innerWidth) x = event.clientX - tw - pad;
-    if (y + th > window.innerHeight) y = event.clientY - th - pad;
+    const pad = 16; let x = event.clientX + pad, y = event.clientY + pad;
+    if (x + 300 > window.innerWidth) x = event.clientX - 316;
+    if (y + 110 > window.innerHeight) y = event.clientY - 126;
     tooltip.style("left", x + "px").style("top", y + "px");
   }
   function hideTooltip() { tooltip.classed("show", false); }
 
   function updateBreadcrumb() {
-    const chain = [];
-    let n = currentFocus;
+    const chain = []; let n = currentFocus;
     while (n) { chain.unshift(n); n = n.parent; }
     breadcrumb.html("");
     chain.forEach((d, i) => {
       if (i > 0) breadcrumb.append("span").attr("class", "sep").text("›");
-      breadcrumb.append("span").attr("class", "crumb")
-        .text(d.data.name)
-        .on("click", () => zoomTo(d));
+      breadcrumb.append("span").attr("class", "crumb").text(d.data.name).on("click", () => zoomTo(d));
     });
   }
 
   function zoomTo(d) {
     currentFocus = d;
-    if (d === root) {
-      layout();
-    } else {
+    if (d === root) { layout(); }
+    else {
       const sub = d3.hierarchy(d.data).sum(dd => dd.value || 0).sort((a, b) => b.value - a.value);
-      d3.treemap()
-        .tile(d3.treemapSquarify.ratio(1.4))
-        .size([width, height])
-        .paddingOuter(12)
-        .paddingInner(6)
-        .round(true)(sub);
-      d.children.forEach((c, i) => {
-        c.x0 = sub.children[i].x0; c.y0 = sub.children[i].y0;
-        c.x1 = sub.children[i].x1; c.y1 = sub.children[i].y1;
-      });
+      d3.treemap().tile(d3.treemapSquarify.ratio(1.4)).size([width, height])
+        .paddingOuter(12).paddingInner(3).round(true)(sub);
+      d.children.forEach((c, i) => { c.x0 = sub.children[i].x0; c.y0 = sub.children[i].y0; c.x1 = sub.children[i].x1; c.y1 = sub.children[i].y1; });
     }
     updateBreadcrumb();
-    render();
+    renderMap();
   }
 
   svgEl.on("click", () => { if (currentFocus !== root) zoomTo(root); });
 
-  window.addEventListener("resize", () => {
+  function renderLegend() {
+    const el = document.getElementById("legend-footer");
+    if (state.lens === "maintenance") {
+      el.innerHTML = `Engineering lens — color = maintenance health.
+        <div class="legend-row" style="margin-top:6px">
+          <span><span class="dot" style="background:${maintColor.active}"></span>Active</span>
+          <span><span class="dot" style="background:${maintColor.moderate}"></span>Moderate</span>
+          <span><span class="dot" style="background:${maintColor.stale}"></span>Stale</span>
+          <span><span class="dot" style="background:${maintColor.archived}"></span>Archived</span>
+        </div>`;
+    } else if (state.lens === "traction") {
+      el.innerHTML = `Product lens — color = traction (stars per day since creation), a proxy for momentum.
+        <div class="legend-row" style="margin-top:6px">
+          <span><span class="dot" style="background:#1e293b"></span>Low</span>
+          <span><span class="dot" style="background:#3b82f6"></span></span>
+          <span><span class="dot" style="background:#a78bfa"></span></span>
+          <span><span class="dot" style="background:#f472b6"></span>High</span>
+        </div>`;
+    } else {
+      el.innerHTML = "Rectangle area ∝ GitHub stars. Click a category to zoom in, background to zoom out, a project to open details.";
+    }
+  }
+
+  // ================= TABLE VIEW =================
+  const COLS = [
+    { key: "name", label: "Project" },
+    { key: "category", label: "Category" },
+    { key: "stars", label: "Stars", num: true },
+    { key: "forks", label: "Forks", num: true },
+    { key: "language", label: "Language" },
+    { key: "license", label: "License" },
+    { key: "maintenance", label: "Maintenance" },
+    { key: "traction", label: "Traction", num: true },
+  ];
+
+  function renderTable() {
+    const rows = allProjects.filter(passesFilter);
+    rows.sort((a, b) => {
+      const av = a[state.sortCol], bv = b[state.sortCol];
+      if (av == null) return 1; if (bv == null) return -1;
+      if (typeof av === "string") return state.sortDir * av.localeCompare(bv);
+      return state.sortDir * (av - bv);
+    });
+
+    const container = document.getElementById("tableView");
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const trh = document.createElement("tr");
+    COLS.forEach(c => {
+      const th = document.createElement("th");
+      th.textContent = c.label + (state.sortCol === c.key ? (state.sortDir === 1 ? " ▲" : " ▼") : "");
+      th.className = state.sortCol === c.key ? "sorted" : "";
+      th.addEventListener("click", () => {
+        if (state.sortCol === c.key) state.sortDir *= -1;
+        else { state.sortCol = c.key; state.sortDir = -1; }
+        renderTable();
+      });
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    rows.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="name">${p.name}</td>
+        <td>${p.category}</td>
+        <td>${p.stars.toLocaleString()}</td>
+        <td>${p.forks.toLocaleString()}</td>
+        <td>${p.language || "—"}</td>
+        <td>${p.license || '<span class="risk">none</span>'}</td>
+        <td><span class="badge ${p.maintenance}">${p.maintenance}</span></td>
+        <td>${p.traction.toLocaleString()}</td>
+      `;
+      tr.addEventListener("click", () => openDetail(p));
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.innerHTML = "";
+    container.appendChild(table);
+
+    if (!rows.length) {
+      container.innerHTML = '<p style="color:var(--muted);padding:20px;">No projects match the current filters.</p>';
+    }
+  }
+
+  // ================= DETAIL PANEL =================
+  const detailEl = document.getElementById("detail");
+  document.getElementById("closeDetail").addEventListener("click", () => detailEl.classList.remove("open"));
+
+  function openDetail(p) {
+    document.getElementById("detailBody").innerHTML = `
+      <h2>${p.name}</h2>
+      <div class="full-name">${p.full_name}</div>
+      <p class="desc">${p.description}</p>
+      <div class="metric-grid">
+        <div class="metric"><div class="k">Stars</div><div class="v">⭐ ${p.stars.toLocaleString()}</div></div>
+        <div class="metric"><div class="k">Forks</div><div class="v">🍴 ${p.forks.toLocaleString()}</div></div>
+        <div class="metric"><div class="k">Open issues</div><div class="v">${p.open_issues.toLocaleString()}</div></div>
+        <div class="metric"><div class="k">Traction</div><div class="v">${p.traction.toLocaleString()}/day</div></div>
+        <div class="metric"><div class="k">Language</div><div class="v">${p.language || "—"}</div></div>
+        <div class="metric"><div class="k">License</div><div class="v">${p.license || '<span class="risk">none</span>'}</div></div>
+        <div class="metric"><div class="k">Maintenance</div><div class="v"><span class="badge ${p.maintenance}">${p.maintenance}</span></div></div>
+        <div class="metric"><div class="k">Last push</div><div class="v">${p.days_since_push != null ? p.days_since_push + "d ago" : "—"}</div></div>
+      </div>
+      <a class="open-link" href="${p.url}" target="_blank" rel="noopener">Open on GitHub ↗</a>
+    `;
+    detailEl.classList.add("open");
+  }
+
+  // ================= refresh / boot =================
+  function refresh() {
+    buildRoot();
     measure();
     layout();
-    if (currentFocus !== root) zoomTo(currentFocus);
-    else render();
-  });
+    updateBreadcrumb();
+    if (state.view === "map") renderMap();
+    else renderTable();
+  }
 
-  // search
-  const searchInput = document.getElementById("search");
-  searchInput.addEventListener("input", () => {
-    const q = searchInput.value.trim().toLowerCase();
-    g.selectAll("g.node rect").attr("opacity", d => {
-      if (!q) return 1;
-      if (d.depth === 1) return 1;
-      return d.data.name.toLowerCase().includes(q) ? 1 : 0.12;
-    });
-  });
+  function render() {
+    if (state.view === "map") renderMap();
+    else renderTable();
+  }
 
-  updateBreadcrumb();
-  render();
+  window.addEventListener("resize", () => { measure(); if (state.view === "map") { layout(); if (currentFocus !== root) zoomTo(currentFocus); else renderMap(); } });
+
+  renderLegend();
+  refresh();
 })();
 </script>
 </body>
